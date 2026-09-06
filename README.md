@@ -1,8 +1,12 @@
 # Système solaire — webapp d'exploration
 
 Webapp responsive d'exploration du système solaire, pensée comme un jeu vidéo
-éducatif. Voir `CONCEPT.md` (cadrage) et `HANDOFF.md` (spec d'implémentation).
-La source de vérité visuelle est **`DA - Vue système.dc.html`** (27 artboards).
+éducatif : on arrive dans le système, on franchit une « brume cosmique » qui se
+lève au fil des découvertes, on remplit un carnet, on suit des quêtes.
+
+Les identifiants d'écran (`1a`, `2b`, `4e`…) qui apparaissent ci-dessous
+renvoient aux maquettes de direction artistique utilisées pendant
+l'intégration ; ils servent d'étiquettes internes.
 
 ## Démarrer
 
@@ -65,9 +69,10 @@ Node 20 (voir `.tool-versions`).
 ```
 src/
   components/    composants partagés (AppLayout, BodySphere, Avatar, BottomNav…)
-  data/          types du domaine ; bodies.ts (42 objets), zones, badges, quêtes, quiz
+  data/          types du domaine ; bodies.ts (42 objets), zones, badges, quêtes, quiz, blurbs simplifiés
   features/      un dossier par écran
-  store/         état Zustand persistant (progress.ts) + sélecteurs / logique quêtes
+  lib/           utilitaires transverses (lecture à voix haute, nappe sonore)
+  store/         état Zustand persistant (progress.ts) + sélecteurs / logique quêtes / hooks de préférences
   styles/        tokens.css + global.css
   router.tsx     toutes les routes
   main.tsx       point d'entrée
@@ -274,5 +279,5 @@ image" :
 2. Éventuel : auto-héberger les polices (offline dès la 1re visite même sans réseau).
 3. Éventuel : `highlights` courts pour le mode simplifié (aujourd'hui seul le blurb est adapté).
 
-**Toutes les routes et overlays du HANDOFF ont une v1.**
+**Toutes les routes et overlays prévus ont une v1** (desktop + variantes mobiles).
 # solar-system

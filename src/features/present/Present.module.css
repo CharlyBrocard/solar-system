@@ -1,0 +1,221 @@
+.screen {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 56px 60px;
+  background: radial-gradient(110% 100% at 22% 50%, #33234a 0%, #1e1539 44%, #130f29 78%, #0b0a1d 100%);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+.neb {
+  position: absolute;
+  left: -120px;
+  top: -100px;
+  width: 620px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(226, 148, 60, 0.32), rgba(226, 148, 60, 0) 66%);
+  filter: blur(24px);
+  pointer-events: none;
+}
+
+.stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(1.5px 1.5px at 18% 14%, #fff6e0 50%, transparent 52%),
+    radial-gradient(1.3px 1.3px at 44% 8%, #ffe6b8 50%, transparent 52%),
+    radial-gradient(1.6px 1.6px at 76% 20%, #fff6e0 50%, transparent 52%),
+    radial-gradient(1.3px 1.3px at 62% 82%, #ffe6b8 50%, transparent 52%);
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: clamp(32px, 6vw, 60px);
+  height: 100%;
+}
+
+.figure {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+
+.figure::before {
+  content: '';
+  position: absolute;
+  inset: -10%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232, 176, 75, 0.24), rgba(232, 176, 75, 0) 62%);
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2.5vw, 26px);
+  flex: 1;
+  min-width: 0;
+}
+
+.typeRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: clamp(12px, 1.6vw, 15px);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #c2a678;
+}
+
+.typeDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(48px, 9vw, 92px);
+  font-weight: 800;
+  line-height: 0.95;
+}
+
+.desc {
+  margin: 0;
+  font-size: clamp(17px, 2.6vw, 26px);
+  line-height: 1.5;
+  color: #dcd4e4;
+  max-width: 640px;
+  text-wrap: pretty;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 640px;
+}
+
+.stat {
+  padding: 16px 22px;
+  border-radius: 16px;
+  background: rgba(246, 235, 214, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statTemp {
+  background: rgba(95, 182, 201, 0.14);
+}
+
+.statKey {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a49bbd;
+}
+
+.statTemp .statKey {
+  color: #9cc9d6;
+}
+
+.statVal {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3.6vw, 34px);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.statTemp .statVal {
+  color: #bfe6f0;
+}
+
+.quit {
+  position: absolute;
+  right: 40px;
+  top: 36px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+  border: 2px solid rgba(246, 235, 214, 0.28);
+  border-radius: var(--radius-md);
+  background: rgba(246, 235, 214, 0.1);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.nav {
+  position: absolute;
+  left: 60px;
+  bottom: 34px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.navBtn {
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--panel-cream);
+  box-shadow: 0 4px 0 var(--ink-shadow);
+  color: var(--panel-cream-ink);
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.navBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.navLabel {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #a49bbd;
+}
+
+@media (max-width: 900px) {
+  .screen {
+    padding: 72px 20px 100px;
+    overflow-y: auto;
+  }
+  .row {
+    flex-direction: column;
+    align-items: flex-start;
+    height: auto;
+    gap: 24px;
+  }
+  .figure {
+    align-self: center;
+  }
+  .nav {
+    left: 20px;
+    bottom: 20px;
+  }
+  .quit {
+    right: 16px;
+    top: 16px;
+  }
+}

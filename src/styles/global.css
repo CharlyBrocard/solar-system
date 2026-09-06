@@ -1,0 +1,80 @@
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--bg-void);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--fs-eyebrow);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+/* Cible tactile minimale sur mobile */
+@media (pointer: coarse) {
+  button,
+  a[role='button'] {
+    min-height: 44px;
+  }
+}
+
+/* ── Mode simplifié (préférence « 8-10 ans ») ────────────────────────────
+   Pas de contenu alternatif : on agrandit et on aère le texte, et on masque
+   les blocs marqués comme « denses » (comparaisons chiffrées, etc.). */
+:root[data-simplified='true'] {
+  --fs-body: 18px;
+  --fs-card-label: 21px;
+}
+
+:root[data-simplified='true'] body {
+  line-height: 1.72;
+  letter-spacing: 0.004em;
+}
+
+:root[data-simplified='true'] p {
+  line-height: 1.8;
+}
+
+:root[data-simplified='true'] [data-dense='true'] {
+  display: none !important;
+}

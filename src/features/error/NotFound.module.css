@@ -1,0 +1,127 @@
+.screen {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  display: grid;
+  place-items: center;
+  padding: 40px 24px;
+  background: radial-gradient(110% 90% at 50% 58%, #241c48 0%, #191234 44%, #100c26 78%, #09081a 100%);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+.neb {
+  position: fixed;
+  left: -140px;
+  bottom: -140px;
+  width: 640px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(96, 72, 190, 0.3), rgba(96, 72, 190, 0) 68%);
+  filter: blur(24px);
+  pointer-events: none;
+}
+
+.stars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(1.4px 1.4px at 16% 20%, #cfc7e0 50%, transparent 52%),
+    radial-gradient(1.2px 1.2px at 42% 10%, #b8b0cc 50%, transparent 52%),
+    radial-gradient(1.5px 1.5px at 70% 18%, #cfc7e0 50%, transparent 52%),
+    radial-gradient(1.2px 1.2px at 88% 64%, #b8b0cc 50%, transparent 52%);
+}
+
+.card {
+  position: relative;
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  text-align: center;
+}
+
+.icon {
+  position: relative;
+  width: 150px;
+  height: 150px;
+}
+
+.iconDisc {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--locked);
+  box-shadow: inset 0 0 0 2px rgba(246, 235, 214, 0.18);
+}
+
+.iconBar {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 120px;
+  height: 4px;
+  margin: -2px 0 0 -60px;
+  border-radius: 2px;
+  background: rgba(246, 235, 214, 0.4);
+  transform: rotate(-32deg);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 6vw, 38px);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.text {
+  margin: 0;
+  font-size: clamp(15px, 3vw, 17px);
+  line-height: 1.6;
+  color: #b8b0cc;
+  max-width: 480px;
+  text-wrap: pretty;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.primary {
+  padding: 14px 28px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--accent);
+  box-shadow: 0 5px 0 var(--accent-shadow);
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent-ink);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.secondary {
+  padding: 14px 28px;
+  border: 2px solid rgba(246, 235, 214, 0.26);
+  border-radius: 16px;
+  background: rgba(246, 235, 214, 0.1);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6f6890;
+}

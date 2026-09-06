@@ -1,0 +1,59 @@
+.bar {
+  display: none;
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 18px;
+  z-index: 20;
+  height: 62px;
+  border-radius: 20px;
+  background: var(--panel-cream);
+  box-shadow: 0 5px 0 var(--ink-shadow), 0 16px 32px rgba(6, 4, 18, 0.4);
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a2814a;
+  min-width: 56px;
+}
+
+.tab[data-active='true'] {
+  color: #b8541f;
+}
+
+.glyph {
+  width: 22px;
+  height: 22px;
+  border: 3px solid currentColor;
+  box-sizing: border-box;
+}
+
+.glyph[data-shape='round'] {
+  border-radius: 50%;
+}
+
+.glyph[data-shape='square'] {
+  border-radius: 6px;
+}
+
+.tab[data-active='true'] .glyph {
+  background: currentColor;
+  border-color: currentColor;
+}
+
+@media (max-width: 900px) {
+  .bar {
+    display: flex;
+  }
+}

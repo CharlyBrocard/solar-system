@@ -1,0 +1,59 @@
+/* Design tokens (couleurs, rayons, ombres, typographie) — repris de la DA.
+   Ne pas introduire de nouvelle couleur d'accent ni de nouvelle famille de police. */
+
+:root {
+  /* ---- Fond spatial (2 fonds seulement : disque + brume) ---- */
+  --bg-disc-center: #2b1f4e;
+  --bg-disc-mid: #1b1438;
+  --bg-disc-outer: #120e28;
+  --bg-void: #0b0a1d;
+
+  /* ---- Encre ---- */
+  --ink: #f6ebd6; /* encre crème : tout le HUD */
+  --ink-dim: #b3adc4;
+  --ink-shadow: rgba(120, 74, 30, 0.5);
+
+  /* ---- Accents par type d'objet ---- */
+  --type-rocky: #e0703c; /* tellurique */
+  --type-gas: #e8b04b; /* géante gazeuse */
+  --type-ice: #5fb6c9; /* glace */
+  --type-small: #9b8f7e; /* petit corps */
+  --type-star: #ffca5c; /* étoile */
+
+  /* ---- Actions / états ---- */
+  --accent: #ec8a2a; /* action primaire */
+  --accent-shadow: #a85a12;
+  --accent-ink: #2a1a12; /* texte sur bouton accent */
+  --success: #6bc48a; /* découvert, objectif atteint */
+  --locked: #2d2456; /* silhouette verrouillée */
+  --locked-ink: #7d76a0;
+  --fog-body: #3a2f68; /* objet deviné dans la brume */
+
+  /* ---- Panneaux ---- */
+  --panel-cream: #f6ebd6;
+  --panel-cream-ink: #2a1a12;
+  --panel-dark-a: #241b45;
+  --panel-dark-b: #171132;
+
+  /* ---- Rayons ---- */
+  --radius-sm: 12px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+
+  /* ---- Ombres "pion posé" ---- */
+  --shadow-cream: 0 5px 0 var(--ink-shadow);
+  --shadow-accent: 0 5px 0 var(--accent-shadow);
+  --shadow-body: 0 8px 16px rgba(8, 4, 20, 0.55);
+
+  /* ---- Typo ---- */
+  --font-display: 'Baloo 2', system-ui, sans-serif; /* 500-800 */
+  --font-body: 'Karla', system-ui, sans-serif; /* 400-700 */
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace; /* 400-600 */
+
+  /* ---- Échelle typographique ---- */
+  --fs-screen-title: 40px;
+  --fs-object-name: 26px;
+  --fs-card-label: 19px;
+  --fs-body: 15px;
+  --fs-eyebrow: 11px;
+}

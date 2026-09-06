@@ -1,0 +1,224 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(11, 10, 29, 0.62);
+  font-family: var(--font-body);
+}
+
+.glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 900px;
+  height: 900px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232, 176, 75, 0.24), rgba(232, 176, 75, 0) 62%);
+  filter: blur(20px);
+  pointer-events: none;
+}
+
+.card {
+  position: relative;
+  width: min(620px, 100%);
+  box-sizing: border-box;
+  padding: 40px;
+  border-radius: 24px;
+  background: linear-gradient(165deg, #2f2456, #1a1339);
+  box-shadow: 0 30px 70px rgba(4, 3, 14, 0.6), inset 0 0 0 2px rgba(232, 176, 75, 0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  text-align: center;
+  animation: rise 220ms ease both;
+}
+
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(232, 176, 75, 0.16);
+  border: 1px solid rgba(232, 176, 75, 0.5);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #ffd98a;
+}
+
+.pillDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--type-gas);
+}
+
+.sphereWrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.sphereWrap::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232, 176, 75, 0.34), rgba(232, 176, 75, 0) 62%);
+}
+
+.name {
+  font-size: 52px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.blurb {
+  font-size: 17px;
+  line-height: 1.5;
+  color: #cdc5da;
+  max-width: 440px;
+}
+
+.badgeRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: rgba(232, 176, 75, 0.12);
+}
+
+.badgeIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: linear-gradient(160deg, #ffe3a5, var(--type-gas));
+  box-shadow: inset 0 -4px 0 rgba(150, 100, 10, 0.35);
+  flex: none;
+}
+
+.badgeText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.badgeKey {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #c2a678;
+}
+
+.badgeTitle {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.count {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.countNum {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffd98a;
+  line-height: 1;
+}
+
+.countKey {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c2a678;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.primary {
+  flex: 1;
+  height: 54px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--accent);
+  box-shadow: var(--shadow-accent);
+  color: var(--accent-ink);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.secondary {
+  flex: 1;
+  height: 54px;
+  border: 2px solid rgba(246, 235, 214, 0.28);
+  border-radius: 16px;
+  background: rgba(246, 235, 214, 0.1);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(14px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 28px 22px;
+    gap: 18px;
+  }
+  .name {
+    font-size: 38px;
+  }
+  .blurb {
+    font-size: 15px;
+  }
+  .actions {
+    flex-direction: column;
+  }
+  .badgeRow {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+  .badgeTitle {
+    font-size: 17px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .card {
+    animation: none;
+  }
+}
