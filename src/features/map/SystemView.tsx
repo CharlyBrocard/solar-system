@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { RING_RADIUS, TOTAL_BODIES, bodyById, mainMapBodies } from '@/data/bodies';
 import type { Body, Zone } from '@/data/types';
@@ -7,13 +7,16 @@ import { useProgress, ZONE_ORDER } from '@/store/progress';
 import { unlockedZones } from '@/store/selectors';
 import { RINGS } from './geometry';
 import { OrbitalScene, ringColor } from '@/features/scene/OrbitalScene';
-import type { ScenePin } from '@/features/scene/OrbitalScene';
+import type { OrbitalSceneProps, ScenePin } from '@/features/scene/OrbitalScene';
 import { ActiveQuestCard } from '@/features/quests/ActiveQuestCard';
 import { SearchOverlay } from '@/features/search/SearchOverlay';
 import { Hud } from './Hud';
 import { RealScaleView } from './RealScaleView';
 import { SealedZoneCard } from './SealedZoneCard';
 import { Tutorial } from './Tutorial';
+
+// Scène 3D derrière un flag (`/map?r3d=1`) — chargée en lazy.
+const OrbitalScene3D = lazy(() => import('@/features/scene3d/OrbitalScene3D'));
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(v, hi));
 
@@ -139,34 +142,38 @@ export function SystemView() {
 
   if (realScale) return <RealScaleView onClose={exitRealScale} />;
 
-  return (
-    <OrbitalScene
-      background={SCENE_BG}
-      origin={[50, 55]}
-      zoom={zoom}
-      pan={pan}
-      onZoom={setZoom}
-      onPan={setPan}
-      rings={rings}
-      centerBody={sun}
-      centerSize={112}
-      onCenterClick={() => handleSelect(sun)}
-      pins={pins}
-      decorativeDots={BELT_DOTS}
-      beltMarker={{
-        label: "Ceinture d'astéroïdes",
-        angle: 62,
-        radius: RING_RADIUS.ceinture,
-        locked: !unlocked.has('ceinture'),
-        onClick: handleBelt,
-      }}
-      fogOpenness={fogOpenness}
-      hoveredId={hoveredId}
-      onHover={setHoveredId}
-      onSelect={handleSelect}
-      diveTo={diveTo}
-      onDiveComplete={finishDive}
-    >
+  const use3d = params.get('r3d') === '1';
+
+  const sceneProps: OrbitalSceneProps = {
+    background: SCENE_BG,
+    origin: [50, 55],
+    zoom,
+    pan,
+    onZoom: setZoom,
+    onPan: setPan,
+    rings,
+    centerBody: sun,
+    centerSize: 112,
+    onCenterClick: () => handleSelect(sun),
+    pins,
+    decorativeDots: BELT_DOTS,
+    beltMarker: {
+      label: "Ceinture d'astéroïdes",
+      angle: 62,
+      radius: RING_RADIUS.ceinture,
+      locked: !unlocked.has('ceinture'),
+      onClick: handleBelt,
+    },
+    fogOpenness,
+    hoveredId,
+    onHover: setHoveredId,
+    onSelect: handleSelect,
+    diveTo,
+    onDiveComplete: finishDive,
+  };
+
+  const sceneChildren = (
+    <>
       <ActiveQuestCard />
       <Tutorial />
       {sealedZone && (
@@ -193,6 +200,18 @@ export function SystemView() {
         onOpenQuests={() => navigate('/quests')}
         sealedZones={sealedCount}
       />
-    </OrbitalScene>
+    </>
   );
+
+  if (use3d) {
+    return (
+      <Suspense
+        fallback={<div style={{ position: 'fixed', inset: 0, background: '#0b0a1d' }} />}
+      >
+        <OrbitalScene3D {...sceneProps}>{sceneChildren}</OrbitalScene3D>
+      </Suspense>
+    );
+  }
+
+  return <OrbitalScene {...sceneProps}>{sceneChildren}</OrbitalScene>;
 }

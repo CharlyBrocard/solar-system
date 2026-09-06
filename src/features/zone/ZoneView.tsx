@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { beltBodies, bodyById, moonsOf } from '@/data/bodies';
 import type { Body } from '@/data/types';
 import { ZONE_META } from '@/data/zones';
@@ -7,8 +7,10 @@ import { useProgress } from '@/store/progress';
 import { useBlurb } from '@/store/useBlurb';
 import { unlockedZones } from '@/store/selectors';
 import { OrbitalScene, ringColor } from '@/features/scene/OrbitalScene';
-import type { ScenePin } from '@/features/scene/OrbitalScene';
+import type { OrbitalSceneProps, ScenePin } from '@/features/scene/OrbitalScene';
 import styles from './ZoneView.module.css';
+
+const OrbitalScene3D = lazy(() => import('@/features/scene3d/OrbitalScene3D'));
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(v, hi));
 
@@ -53,6 +55,7 @@ function configFor(id: string | undefined): ZoneConfig | null {
 
 export function ZoneView() {
   const { id } = useParams();
+  const [params] = useSearchParams();
   const navigate = useNavigate();
 
   const discovered = useProgress((s) => s.discovered);
@@ -121,27 +124,31 @@ export function ZoneView() {
     navigate(`/object/${bid}`);
   };
 
-  return (
-    <OrbitalScene
-      background={config.bg}
-      origin={[46, 54]}
-      zoom={zoom}
-      pan={pan}
-      onZoom={setZoom}
-      onPan={setPan}
-      zoomRange={[0.5, 3]}
-      rings={rings}
-      centerBody={center}
-      centerSize={centerSize}
-      onCenterClick={() => handleSelect(center)}
-      pins={pins}
-      fogOpenness={0.52}
-      hoveredId={hoveredId}
-      onHover={setHoveredId}
-      onSelect={handleSelect}
-      diveTo={diveTo}
-      onDiveComplete={finishDive}
-    >
+  const use3d = params.get('r3d') === '1';
+
+  const sceneProps: OrbitalSceneProps = {
+    background: config.bg,
+    origin: [46, 54],
+    zoom,
+    pan,
+    onZoom: setZoom,
+    onPan: setPan,
+    zoomRange: [0.5, 3],
+    rings,
+    centerBody: center,
+    centerSize,
+    onCenterClick: () => handleSelect(center),
+    pins,
+    fogOpenness: 0.52,
+    hoveredId,
+    onHover: setHoveredId,
+    onSelect: handleSelect,
+    diveTo,
+    onDiveComplete: finishDive,
+  };
+
+  const sceneChildren = (
+    <>
       <div className={styles.breadcrumb}>
         <span className={styles.crumbRoot}>Système solaire</span>
         {!config.isBelt && (
@@ -198,6 +205,18 @@ export function ZoneView() {
           −
         </button>
       </div>
-    </OrbitalScene>
+    </>
   );
+
+  if (use3d) {
+    return (
+      <Suspense
+        fallback={<div style={{ position: 'fixed', inset: 0, background: '#0b0a1d' }} />}
+      >
+        <OrbitalScene3D {...sceneProps}>{sceneChildren}</OrbitalScene3D>
+      </Suspense>
+    );
+  }
+
+  return <OrbitalScene {...sceneProps}>{sceneChildren}</OrbitalScene>;
 }

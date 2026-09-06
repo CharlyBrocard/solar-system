@@ -1,0 +1,89 @@
+.wrap {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  font-family: var(--font-body);
+  background: var(--bg-void);
+}
+
+.wrap canvas {
+  display: block;
+  touch-action: none;
+}
+
+.fogVeil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: background 500ms ease;
+  z-index: 1;
+}
+
+.diveVeil {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.diveVeil[data-on='true'] {
+  opacity: 0.92;
+  transition: opacity 480ms ease-out 30ms;
+}
+
+/* label de survol (drei <Html>) */
+.label {
+  transform: translateY(-50%);
+  width: 150px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 7px 10px 9px;
+  background: var(--panel-cream);
+  border-radius: 12px;
+  box-shadow: 0 6px 0 rgba(120, 74, 30, 0.5), 0 14px 26px rgba(8, 4, 20, 0.45);
+  pointer-events: none;
+  user-select: none;
+}
+
+.labelName {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--panel-cream-ink);
+  line-height: 1;
+}
+
+.labelMeta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: #a2401f;
+}
+
+/* marqueur ceinture (drei <Html>) */
+.beltMarker {
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  padding: 7px 13px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(246, 235, 214, 0.92);
+  box-shadow: 0 4px 0 var(--ink-shadow);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--panel-cream-ink);
+  cursor: pointer;
+}
+
+.beltMarker[data-locked='true'] {
+  background: rgba(246, 235, 214, 0.14);
+  box-shadow: none;
+  color: var(--locked-ink);
+}

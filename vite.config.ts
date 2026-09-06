@@ -36,8 +36,10 @@ export default defineConfig({
       workbox: {
         // précache tout le bundle : l'app tient hors-ligne dès la 1re visite
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-        // le spike 3D (`/r3d`) est hors app : on ne le précache pas
-        globIgnores: ['**/SpikeR3D-*'],
+        // le 3D est encore derrière un flag → hors du précache pour l'instant
+        // Le 3D (three.js) est encore derrière un flag → hors du précache.
+        // `Bloom-*` est le chunk partagé three.js (nommé d'après postprocessing).
+        globIgnores: ['**/SpikeR3D-*', '**/OrbitalScene3D-*', '**/Bloom-*'],
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
         runtimeCaching: [
