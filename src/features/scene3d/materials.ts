@@ -144,19 +144,60 @@ export function radialSprite(key: string, stops: [number, string][]): THREE.Text
   });
 }
 
-/** Dégradé vertical du fond spatial. */
+/** Dégradé vertical du fond spatial + deux nébuleuses très diffuses. */
 export function backdropTexture(): THREE.Texture {
   return memo('backdrop', () => {
+    const W = 512;
+    const H = 256;
     const c = document.createElement('canvas');
-    c.width = 2;
-    c.height = 256;
+    c.width = W;
+    c.height = H;
     const ctx = c.getContext('2d')!;
-    const g = ctx.createLinearGradient(0, 0, 0, 256);
+    const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, '#0c0a1e');
     g.addColorStop(0.5, '#171334');
     g.addColorStop(1, '#0a0817');
     ctx.fillStyle = g;
-    ctx.fillRect(0, 0, 2, 256);
+    ctx.fillRect(0, 0, W, H);
+    const blob = (x: number, y: number, r: number, col: string) => {
+      const rg = ctx.createRadialGradient(x, y, 0, x, y, r);
+      rg.addColorStop(0, col);
+      rg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = rg;
+      ctx.fillRect(0, 0, W, H);
+    };
+    blob(W * 0.24, H * 0.32, W * 0.28, 'rgba(120,60,140,0.16)');
+    blob(W * 0.78, H * 0.6, W * 0.3, 'rgba(60,80,150,0.14)');
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  });
+}
+
+/** Surface du Soleil : granulation chaude (évite le disque plat). */
+export function sunTexture(): THREE.Texture {
+  return memo('sun-surface', () => {
+    const N = 256;
+    const c = document.createElement('canvas');
+    c.width = N;
+    c.height = N;
+    const ctx = c.getContext('2d')!;
+    ctx.fillStyle = '#ffcf72';
+    ctx.fillRect(0, 0, N, N);
+    for (let i = 0; i < 420; i++) {
+      const x = Math.random() * N;
+      const y = Math.random() * N;
+      const r = 2 + Math.random() * 9;
+      const rg = ctx.createRadialGradient(x, y, 0, x, y, r);
+      const warm = Math.random() > 0.5;
+      rg.addColorStop(0, warm ? 'rgba(255,244,200,0.5)' : 'rgba(240,140,50,0.4)');
+      rg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = rg;
+      ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+    ctx.filter = 'blur(1.5px)';
+    ctx.drawImage(c, 0, 0);
+    ctx.filter = 'none';
     const t = new THREE.CanvasTexture(c);
     t.colorSpace = THREE.SRGBColorSpace;
     return t;

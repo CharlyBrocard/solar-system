@@ -80,6 +80,18 @@
   text-transform: uppercase;
   color: var(--panel-cream-ink);
   cursor: pointer;
+  transition: opacity 200ms ease, transform 150ms ease;
+}
+
+.beltMarker[data-hot='true'] {
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+@media (max-width: 640px) {
+  .beltMarker {
+    font-size: 9px;
+    padding: 6px 10px;
+  }
 }
 
 .beltMarker[data-locked='true'] {

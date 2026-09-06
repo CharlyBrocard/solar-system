@@ -12,13 +12,13 @@ import { Html, OrbitControls, Stars } from '@react-three/drei';
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import type { Body } from '@/data/types';
-import { fogVeilGradient } from '@/features/map/geometry';
 import type { OrbitalSceneProps } from '@/features/scene/OrbitalScene';
 import {
   backdropTexture,
   bandedTexture,
   radialSprite,
   ringTexture,
+  sunTexture,
   terrainTexture,
 } from './materials';
 import {
@@ -72,12 +72,13 @@ function CenterBody({
     [],
   );
   const map = useMemo(
-    () => (body.banded ? bandedTexture(body) : terrainTexture(body)),
-    [body],
+    () =>
+      isStar ? sunTexture() : body.banded ? bandedTexture(body) : terrainTexture(body),
+    [isStar, body],
   );
 
   useFrame((_, dt) => {
-    if (mesh.current) mesh.current.rotation.y += dt * (isStar ? 0.03 : 0.05);
+    if (mesh.current) mesh.current.rotation.y += dt * (isStar ? 0.02 : 0.05);
   });
 
   const pointer = onClick
@@ -98,7 +99,7 @@ function CenterBody({
       <mesh ref={mesh} {...pointer}>
         <sphereGeometry args={[radius, 48, 48]} />
         {isStar ? (
-          <meshBasicMaterial color={[2.4, 1.8, 0.95]} toneMapped={false} />
+          <meshBasicMaterial map={map} color={[2.1, 1.55, 0.85]} toneMapped={false} />
         ) : (
           <meshStandardMaterial
             map={map}
@@ -323,34 +324,74 @@ function BeltDots({ dots, driftRef }: { dots: NonNullable<OrbitalSceneProps['dec
 
 /* ── marqueur ceinture ────────────────────────────────────────────────── */
 
-function BeltMarker3D({
-  marker,
-  driftRef,
-}: {
-  marker: NonNullable<OrbitalSceneProps['beltMarker']>;
-  driftRef: DriftRef;
-}) {
+function BeltMarker3D({ marker }: { marker: NonNullable<OrbitalSceneProps['beltMarker']> }) {
   const group = useRef<THREE.Group>(null);
-  const tmp = useMemo(() => new THREE.Vector3(), []);
+  const ndc = useMemo(() => new THREE.Vector3(), []);
+  const { camera } = useThree();
+  const [hot, setHot] = useState(false);
+  const r = marker.radius * ORBIT_SCALE;
+
   useFrame(() => {
-    if (group.current) {
-      orbitPosition({ orbitRadius: marker.radius, orbitAngle: marker.angle }, driftRef.current, tmp);
-      group.current.position.set(tmp.x, 5, tmp.z); // flotte nettement au-dessus de l'anneau
+    const g = group.current;
+    if (!g) return;
+    // le label se pose au point de l'anneau le plus loin du centre de l'écran
+    let best = 0;
+    let bestD = -Infinity;
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 16) {
+      ndc.set(Math.cos(a) * r, 1.2, Math.sin(a) * r).project(camera);
+      if (ndc.z >= 1) continue;
+      const d = Math.hypot(ndc.x, ndc.y);
+      if (d > bestD) {
+        bestD = d;
+        best = a;
+      }
     }
+    g.position.set(Math.cos(best) * r, 1.2, Math.sin(best) * r);
   });
+
   return (
-    <group ref={group}>
-      <Html center occlude zIndexRange={[16, 0]}>
-        <button
-          type="button"
-          className={styles.beltMarker}
-          data-locked={marker.locked ? 'true' : undefined}
-          onClick={marker.onClick}
-        >
-          {marker.label}
-        </button>
-      </Html>
-    </group>
+    <>
+      {/* anneau invisible cliquable : cible fiable quel que soit le cadrage */}
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        onClick={(e) => {
+          e.stopPropagation();
+          marker.onClick();
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          setHot(true);
+          document.body.style.cursor = 'pointer';
+        }}
+        onPointerOut={() => {
+          setHot(false);
+          document.body.style.cursor = 'auto';
+        }}
+      >
+        <ringGeometry args={[r - 1, r + 1, 96]} />
+        <meshBasicMaterial
+          color="#e8b04b"
+          transparent
+          opacity={hot ? 0.16 : 0}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
+      </mesh>
+
+      <group ref={group}>
+        <Html center zIndexRange={[16, 0]}>
+          <button
+            type="button"
+            className={styles.beltMarker}
+            data-locked={marker.locked ? 'true' : undefined}
+            data-hot={hot ? 'true' : undefined}
+            onClick={marker.onClick}
+          >
+            {marker.label}
+          </button>
+        </Html>
+      </group>
+    </>
   );
 }
 
@@ -438,13 +479,13 @@ function CameraRig({
     cam.far = d * 5 + 800;
     cam.updateProjectionMatrix();
 
-    const elev = THREE.MathUtils.degToRad(portrait ? 42 : ELEVATION_DEG);
+    const elev = THREE.MathUtils.degToRad(portrait ? 49 : ELEVATION_DEG);
     defaultElev.current = elev;
     cam.position.set(0, Math.sin(elev) * targetDist.current, Math.cos(elev) * targetDist.current);
     const c = controls.current;
     if (c) {
       // en portrait, viser un poil vers le proche → le disque remonte à l'écran
-      c.target.set(0, 0, portrait ? sceneRadius * 0.24 : 0);
+      c.target.set(0, 0, portrait ? sceneRadius * 0.32 : 0);
       c.minDistance = d / zoomRange[1];
       c.maxDistance = d / zoomRange[0];
       c.update();
@@ -623,6 +664,7 @@ function Scene({
     interactive = true,
     drift = true,
     diveTo = null,
+    fogOpenness = 1,
     onDiveComplete,
   } = props;
 
@@ -641,10 +683,16 @@ function Scene({
     ? worldRadius(centerSize, centerIsStar ? 5 : 1.8, centerIsStar ? 6.5 : 6)
     : 0;
 
+  // brume cosmique : plus les zones sont scellées, plus le brouillard se resserre
+  // → tout ce qui est au-delà du système exploré se perd dans la nuit.
+  const o = THREE.MathUtils.clamp(fogOpenness, 0, 1);
+  const fogNear = sceneRadius * THREE.MathUtils.lerp(0.55, 1.7, o);
+  const fogFar = sceneRadius * THREE.MathUtils.lerp(1.7, 4.4, o);
+
   return (
     <>
       <color attach="background" args={['#0b0a1d']} />
-      <fog attach="fog" args={['#12102a', sceneRadius * 1.5, sceneRadius * 4.4]} />
+      <fog attach="fog" args={['#0e0b22', fogNear, fogFar]} />
       <ambientLight intensity={centerIsStar ? 0.42 : 0.5} />
       <hemisphereLight args={['#4a5a8f', '#3a2a1e', 0.3]} />
       {/* sous-carte (pas d'étoile au centre) : lumière-clé venue du « Soleil » */}
@@ -682,7 +730,7 @@ function Scene({
         <BeltDots dots={decorativeDots} driftRef={driftRef} />
       )}
 
-      {beltMarker && <BeltMarker3D marker={beltMarker} driftRef={driftRef} />}
+      {beltMarker && <BeltMarker3D marker={beltMarker} />}
 
       {hoveredPin && (
         <HoverLabel
@@ -756,13 +804,14 @@ export function OrbitalScene3D(props: OrbitalSceneProps) {
     if (next !== props.zoom) props.onZoom(next);
   };
 
-  const fog = fogVeilGradient(props.origin[0], props.origin[1], props.fogOpenness);
+  // léger vignettage d'écran ; la vraie brume est le `<fog>` 3D (modulé par fogOpenness)
+  const veilAlpha = 0.28 + (1 - THREE.MathUtils.clamp(props.fogOpenness, 0, 1)) * 0.34;
 
   return (
     <div className={styles.wrap} style={{ background: props.background }} onWheelCapture={onWheel}>
       <Canvas
-        dpr={[1, 2]}
-        gl={{ antialias: true, toneMappingExposure: 1.05 }}
+        dpr={[1, 1.85]}
+        gl={{ antialias: true, toneMappingExposure: 1.05, powerPreference: 'high-performance' }}
         camera={{ fov: 44, position: [0, 60, 110] }}
       >
         <Suspense fallback={null}>
@@ -775,7 +824,14 @@ export function OrbitalScene3D(props: OrbitalSceneProps) {
         </Suspense>
       </Canvas>
 
-      <div className={styles.fogVeil} style={{ background: fog }} />
+      <div
+        className={styles.fogVeil}
+        style={{
+          background: `radial-gradient(ellipse 78% 74% at 50% 52%, rgba(8,6,20,0) 42%, rgba(8,6,20,${(
+            veilAlpha * 0.6
+          ).toFixed(2)}) 78%, rgba(6,5,16,${veilAlpha.toFixed(2)}) 100%)`,
+        }}
+      />
 
       {diveColor && (
         <div
