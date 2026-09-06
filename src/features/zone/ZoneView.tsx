@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { beltBodies, bodyById, moonsOf } from '@/data/bodies';
 import type { Body } from '@/data/types';
 import { ZONE_META } from '@/data/zones';
@@ -8,6 +8,7 @@ import { useBlurb } from '@/store/useBlurb';
 import { unlockedZones } from '@/store/selectors';
 import { OrbitalScene, ringColor } from '@/features/scene/OrbitalScene';
 import type { OrbitalSceneProps, ScenePin } from '@/features/scene/OrbitalScene';
+import { use3dScene } from '@/features/scene3d/use3dFlag';
 import styles from './ZoneView.module.css';
 
 const OrbitalScene3D = lazy(() => import('@/features/scene3d/OrbitalScene3D'));
@@ -55,7 +56,6 @@ function configFor(id: string | undefined): ZoneConfig | null {
 
 export function ZoneView() {
   const { id } = useParams();
-  const [params] = useSearchParams();
   const navigate = useNavigate();
 
   const discovered = useProgress((s) => s.discovered);
@@ -124,7 +124,7 @@ export function ZoneView() {
     navigate(`/object/${bid}`);
   };
 
-  const use3d = params.get('r3d') === '1';
+  const use3d = use3dScene();
 
   const sceneProps: OrbitalSceneProps = {
     background: config.bg,

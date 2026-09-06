@@ -1,11 +1,14 @@
-import { useMemo } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { bodyById } from '@/data/bodies';
 import type { Body } from '@/data/types';
 import { useProgress } from '@/store/progress';
 import { OrbitalScene, ringColor } from '@/features/scene/OrbitalScene';
-import type { SceneRing, ScenePin } from '@/features/scene/OrbitalScene';
+import type { OrbitalSceneProps, SceneRing, ScenePin } from '@/features/scene/OrbitalScene';
+import { use3dScene } from '@/features/scene3d/use3dFlag';
 import styles from './EntryScreen.module.css';
+
+const OrbitalScene3D = lazy(() => import('@/features/scene3d/OrbitalScene3D'));
 
 const ENTRY_BG =
   'radial-gradient(110% 100% at 50% 78%, #3a2757 0%, #241a45 38%, #150f2e 72%, #0a0918 100%)';
@@ -41,25 +44,29 @@ export function EntryScreen() {
 
   const enter = () => navigate(explorerName ? '/map' : '/start');
 
-  return (
-    <OrbitalScene
-      background={ENTRY_BG}
-      origin={[50, 57]}
-      zoom={0.5}
-      pan={{ x: 0, y: 0 }}
-      onZoom={() => {}}
-      onPan={() => {}}
-      interactive={false}
-      rings={RINGS}
-      centerBody={bodyById('soleil')}
-      centerSize={92}
-      pins={pins}
-      fogOpenness={0.82}
-      hoveredId={null}
-      onHover={() => {}}
-      onSelect={enter}
-      onCenterClick={enter}
-    >
+  const use3d = use3dScene();
+
+  const sceneProps: OrbitalSceneProps = {
+    background: ENTRY_BG,
+    origin: [50, 57],
+    zoom: 0.5,
+    pan: { x: 0, y: 0 },
+    onZoom: () => {},
+    onPan: () => {},
+    interactive: false,
+    rings: RINGS,
+    centerBody: bodyById('soleil'),
+    centerSize: 92,
+    pins,
+    fogOpenness: 0.82,
+    hoveredId: null,
+    onHover: () => {},
+    onSelect: enter,
+    onCenterClick: enter,
+  };
+
+  const sceneChildren = (
+    <>
       <div className={styles.topFade} />
 
       <div className={styles.hero}>
@@ -85,6 +92,16 @@ export function EntryScreen() {
           <span className={styles.loaderLabel}>Chargement du disque orbital</span>
         </div>
       </div>
-    </OrbitalScene>
+    </>
   );
+
+  if (use3d) {
+    return (
+      <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: '#0b0a1d' }} />}>
+        <OrbitalScene3D {...sceneProps}>{sceneChildren}</OrbitalScene3D>
+      </Suspense>
+    );
+  }
+
+  return <OrbitalScene {...sceneProps}>{sceneChildren}</OrbitalScene>;
 }

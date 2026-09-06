@@ -161,7 +161,7 @@ function Pin({
       orbitPosition(body, driftRef.current, tmp);
       group.current.position.copy(tmp);
     }
-    if (mesh.current) mesh.current.rotation.y += dt * spin;
+    if (mesh.current && revealed) mesh.current.rotation.y += dt * spin;
   });
 
   return (
@@ -193,14 +193,26 @@ function Pin({
             emissiveIntensity={0.16}
           />
         ) : (
-          <meshStandardMaterial color="#2f2752" roughness={1} metalness={0} emissive="#1c1740" emissiveIntensity={0.5} />
+          <meshStandardMaterial
+            color="#3a2f68"
+            roughness={1}
+            metalness={0}
+            emissive="#3a2f68"
+            emissiveIntensity={0.55}
+          />
         )}
       </mesh>
 
       {!revealed && (
-        <mesh scale={1.12}>
+        <mesh scale={1.14}>
           <sphereGeometry args={[radius, 24, 24]} />
-          <meshBasicMaterial color="#8b7fd0" transparent opacity={0.1} side={THREE.BackSide} depthWrite={false} />
+          <meshBasicMaterial
+            color="#b3a6e6"
+            transparent
+            opacity={0.16}
+            side={THREE.BackSide}
+            depthWrite={false}
+          />
         </mesh>
       )}
 
@@ -323,12 +335,12 @@ function BeltMarker3D({
   useFrame(() => {
     if (group.current) {
       orbitPosition({ orbitRadius: marker.radius, orbitAngle: marker.angle }, driftRef.current, tmp);
-      group.current.position.copy(tmp);
+      group.current.position.set(tmp.x, 5, tmp.z); // flotte nettement au-dessus de l'anneau
     }
   });
   return (
     <group ref={group}>
-      <Html center distanceFactor={140} zIndexRange={[20, 0]}>
+      <Html center occlude zIndexRange={[16, 0]}>
         <button
           type="button"
           className={styles.beltMarker}
@@ -385,17 +397,24 @@ function CameraRig({
   zoom,
   zoomRange,
   interactive,
+  diving,
+  recenterKey,
   controls,
 }: {
   sceneRadius: number;
   zoom: number;
   zoomRange: [number, number];
   interactive: boolean;
+  diving: boolean;
+  recenterKey: boolean;
   controls: React.RefObject<OrbitControlsRef>;
 }) {
   const { camera, size } = useThree();
   const fitDist = useRef(sceneRadius * 3);
   const targetDist = useRef(sceneRadius * 3);
+  const defaultElev = useRef(THREE.MathUtils.degToRad(ELEVATION_DEG));
+  const targetAzim = useRef<number | null>(null);
+  const targetPolar = useRef<number | null>(null);
 
   // (re)cadre au montage et au redimensionnement
   useEffect(() => {
@@ -405,20 +424,27 @@ function CameraRig({
     cam.fov = portrait ? THREE.MathUtils.clamp(96 - aspect * 34, 60, 84) : 44;
     const vFov = (cam.fov * Math.PI) / 180;
     const hFov = 2 * Math.atan(Math.tan(vFov / 2) * aspect);
-    const frameRadius = portrait ? sceneRadius * 0.68 : sceneRadius;
-    const fill = portrait ? 0.9 : 0.74;
+    // mode décor (écran d'entrée) : cadrage fixe et généreux, on ignore `zoom`
+    const frameRadius = !interactive
+      ? sceneRadius
+      : portrait
+        ? sceneRadius * 0.7
+        : sceneRadius;
+    const fill = !interactive ? 0.58 : portrait ? 0.92 : 0.74;
     const d = frameRadius / (fill * Math.tan(hFov / 2));
     fitDist.current = d;
-    targetDist.current = d / zoom;
+    targetDist.current = interactive ? d / zoom : d;
     cam.near = Math.max(0.3, d * 0.015);
     cam.far = d * 5 + 800;
     cam.updateProjectionMatrix();
 
-    const elev = THREE.MathUtils.degToRad(portrait ? 46 : ELEVATION_DEG);
+    const elev = THREE.MathUtils.degToRad(portrait ? 42 : ELEVATION_DEG);
+    defaultElev.current = elev;
     cam.position.set(0, Math.sin(elev) * targetDist.current, Math.cos(elev) * targetDist.current);
     const c = controls.current;
     if (c) {
-      c.target.set(0, 0, 0);
+      // en portrait, viser un poil vers le proche → le disque remonte à l'écran
+      c.target.set(0, 0, portrait ? sceneRadius * 0.24 : 0);
       c.minDistance = d / zoomRange[1];
       c.maxDistance = d / zoomRange[0];
       c.update();
@@ -430,27 +456,48 @@ function CameraRig({
 
   // le zoom du parent (+/- du HUD, recentrage) pilote la distance cible
   useEffect(() => {
+    if (!interactive) return;
     targetDist.current = THREE.MathUtils.clamp(
       fitDist.current / zoom,
       fitDist.current / zoomRange[1],
       fitDist.current / zoomRange[0],
     );
-  }, [zoom, zoomRange]);
+  }, [zoom, zoomRange, interactive]);
+
+  // recentrage (bouton du HUD) → on ramène aussi l'orbite caméra au défaut
+  useEffect(() => {
+    if (recenterKey) {
+      targetAzim.current = 0;
+      targetPolar.current = defaultElev.current;
+    }
+  }, [recenterKey]);
 
   useFrame((_, dt) => {
     const c = controls.current;
-    if (!c) return;
+    if (!c || diving) return; // pendant la plongée, DiveController pilote la caméra
+
     const cur = c.getDistance();
     const next = THREE.MathUtils.damp(cur, targetDist.current, 6, dt);
     if (Math.abs(next - cur) > 0.01) {
-      // dolly en gardant la direction
       const dir = camera.position.clone().sub(c.target).normalize();
       camera.position.copy(c.target).addScaledVector(dir, next);
     }
-    if (!interactive) {
-      // mode décor : lente rotation
-      c.setAzimuthalAngle(c.getAzimuthalAngle() + dt * 0.03);
+
+    if (targetAzim.current !== null) {
+      const a = THREE.MathUtils.damp(c.getAzimuthalAngle(), targetAzim.current, 5, dt);
+      const p = THREE.MathUtils.damp(c.getPolarAngle(), targetPolar.current!, 5, dt);
+      c.setAzimuthalAngle(a);
+      c.setPolarAngle(p);
+      if (
+        Math.abs(a - targetAzim.current) < 0.002 &&
+        Math.abs(p - targetPolar.current!) < 0.002
+      ) {
+        targetAzim.current = null;
+        targetPolar.current = null;
+      }
     }
+
+    if (!interactive) c.setAzimuthalAngle(c.getAzimuthalAngle() + dt * 0.03);
     c.update();
   });
 
@@ -485,7 +532,6 @@ function DiveController({
     destTarget: THREE.Vector3;
     t: number;
   } | null>(null);
-  const tmp = useMemo(() => new THREE.Vector3(), []);
 
   useEffect(() => {
     if (!diveTo) {
@@ -520,7 +566,7 @@ function DiveController({
       id: diveTo,
       from: camera.position.clone(),
       fromTarget: c.target.clone(),
-      dest: pos.clone().addScaledVector(dir, Math.max(radius * 4, 6)),
+      dest: pos.clone().addScaledVector(dir, Math.max(radius * 3.2, 4)),
       destTarget: pos.clone(),
       t: 0,
     };
@@ -531,17 +577,18 @@ function DiveController({
     const s = state.current;
     const c = controls.current;
     if (!s || !c) return;
-    s.t = Math.min(1, s.t + dt / 0.62);
-    const e = s.t < 0.5 ? 2 * s.t * s.t : 1 - Math.pow(-2 * s.t + 2, 2) / 2; // easeInOut
-    camera.position.copy(s.from).lerp(s.dest, e);
-    c.target.copy(s.fromTarget).lerp(s.destTarget, e);
+    s.t = Math.min(1, s.t + dt / 0.7);
+    // accélère vers l'astre (plongée), puis décroche à la fin
+    const e = s.t < 0.82 ? 1.24 * s.t * s.t : 1 - Math.pow(1 - s.t, 2) * 3.9;
+    const k = THREE.MathUtils.clamp(e, 0, 1);
+    camera.position.copy(s.from).lerp(s.dest, k);
+    c.target.copy(s.fromTarget).lerp(s.destTarget, k);
     c.update();
     if (s.t >= 1) {
       const id = s.id;
       state.current = null;
       onDone(id);
     }
-    void tmp;
   });
 
   return null;
@@ -589,16 +636,25 @@ function Scene({
   });
 
   const hoveredPin = pins.find((p) => p.body.id === hoveredId);
+  const centerIsStar = centerBody?.type === 'star';
   const centerRadius = centerBody
-    ? worldRadius(centerSize, centerBody.type === 'star' ? 5 : 1.8, centerBody.type === 'star' ? 6.5 : 6)
+    ? worldRadius(centerSize, centerIsStar ? 5 : 1.8, centerIsStar ? 6.5 : 6)
     : 0;
 
   return (
     <>
       <color attach="background" args={['#0b0a1d']} />
-      <fog attach="fog" args={['#12102a', sceneRadius * 1.4, sceneRadius * 4.2]} />
-      <ambientLight intensity={0.42} />
+      <fog attach="fog" args={['#12102a', sceneRadius * 1.5, sceneRadius * 4.4]} />
+      <ambientLight intensity={centerIsStar ? 0.42 : 0.5} />
       <hemisphereLight args={['#4a5a8f', '#3a2a1e', 0.3]} />
+      {/* sous-carte (pas d'étoile au centre) : lumière-clé venue du « Soleil » */}
+      {!centerIsStar && (
+        <directionalLight
+          position={[sceneRadius * 1.4, sceneRadius * 0.9, sceneRadius * 0.6]}
+          intensity={1.7}
+          color="#fff0da"
+        />
+      )}
       <Backdrop />
       <Stars radius={sceneRadius * 2.4} depth={sceneRadius} count={3200} factor={4} saturation={0} fade speed={0.32} />
 
@@ -656,6 +712,8 @@ function Scene({
         zoom={zoom}
         zoomRange={zoomRange}
         interactive={interactive}
+        diving={!!diveTo}
+        recenterKey={props.zoom === 1 && props.pan.x === 0 && props.pan.y === 0}
         controls={controls}
       />
 

@@ -15,7 +15,9 @@ import { RealScaleView } from './RealScaleView';
 import { SealedZoneCard } from './SealedZoneCard';
 import { Tutorial } from './Tutorial';
 
-// Scène 3D derrière un flag (`/map?r3d=1`) — chargée en lazy.
+import { use3dScene } from '@/features/scene3d/use3dFlag';
+
+// Scène 3D derrière un flag (`?r3d=1`) — chargée en lazy.
 const OrbitalScene3D = lazy(() => import('@/features/scene3d/OrbitalScene3D'));
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(v, hi));
@@ -142,7 +144,7 @@ export function SystemView() {
 
   if (realScale) return <RealScaleView onClose={exitRealScale} />;
 
-  const use3d = params.get('r3d') === '1';
+  const use3d = use3dScene();
 
   const sceneProps: OrbitalSceneProps = {
     background: SCENE_BG,
