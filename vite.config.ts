@@ -36,6 +36,8 @@ export default defineConfig({
       workbox: {
         // précache tout le bundle : l'app tient hors-ligne dès la 1re visite
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // le spike 3D (`/r3d`) est hors app : on ne le précache pas
+        globIgnores: ['**/SpikeR3D-*'],
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
         runtimeCaching: [

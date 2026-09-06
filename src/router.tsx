@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { Codex } from '@/features/codex/Codex';
@@ -12,6 +13,9 @@ import { Profile } from '@/features/profile/Profile';
 import { QuestJournal } from '@/features/quests/QuestJournal';
 import { Quiz } from '@/features/quiz/Quiz';
 import { ZoneView } from '@/features/zone/ZoneView';
+
+// Spike 3D jetable (`/r3d`) — chargé en lazy pour ne pas alourdir le bundle.
+const SpikeR3D = lazy(() => import('@/features/spike/SpikeR3D'));
 
 /**
  * Toutes les routes de l'app. Les overlays (quête active `2g`, zone scellée +
@@ -63,6 +67,14 @@ const screens = [
   {
     path: '/present/:id',
     element: <Present />,
+  },
+  {
+    path: '/r3d',
+    element: (
+      <Suspense fallback={null}>
+        <SpikeR3D />
+      </Suspense>
+    ),
   },
   {
     path: '*',
