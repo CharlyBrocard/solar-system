@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import type { Body } from '@/data/types';
 import { bandedTexture, radialSprite, ringTexture, sunTexture, terrainTexture } from './materials';
 import { ATMOSPHERE, prefersReducedMotion } from './scene3d';
+import { useQuality } from './quality';
 
 /**
  * Rendu 3D d'un seul astre — même matière/éclairage que la scène orbitale, mais
@@ -68,7 +69,8 @@ function Sphere({
   silhouette,
   spin,
   moons,
-}: Pick<BodyView3DProps, 'body' | 'silhouette' | 'spin' | 'moons'>) {
+  seg,
+}: Pick<BodyView3DProps, 'body' | 'silhouette' | 'spin' | 'moons'> & { seg: number }) {
   const mesh = useRef<THREE.Mesh>(null);
   const isStar = body.type === 'star';
   const reduced = useMemo(prefersReducedMotion, []);
@@ -113,7 +115,7 @@ function Sphere({
     return (
       <group>
         <mesh>
-          <sphereGeometry args={[1, 40, 40]} />
+          <sphereGeometry args={[1, Math.min(seg, 40), Math.min(seg, 40)]} />
           <meshStandardMaterial
             color="#4a3f7d"
             roughness={1}
@@ -136,7 +138,7 @@ function Sphere({
   return (
     <group rotation={[0.15, 0, 0.05]}>
       <mesh ref={mesh}>
-        <sphereGeometry args={[1, 56, 56]} />
+        <sphereGeometry args={[1, seg, seg]} />
         {isStar ? (
           <meshBasicMaterial map={map ?? undefined} color={[2.3, 1.7, 0.95]} toneMapped={false} />
         ) : (
@@ -167,7 +169,7 @@ function Sphere({
 
       {atmosphere && (
         <mesh scale={1.03}>
-          <sphereGeometry args={[1, 48, 48]} />
+          <sphereGeometry args={[1, Math.min(seg, 48), Math.min(seg, 48)]} />
           <meshBasicMaterial
             color={atmosphere}
             transparent
@@ -263,6 +265,8 @@ export function BodyView3D({
   bleed,
 }: BodyView3DProps) {
   const isStar = body.type === 'star';
+  const q = useQuality();
+  const seg = Math.max(24, Math.min(q.sphereSegments, 64));
   // distance calée pour que le corps occupe ~62 % de la demi-hauteur du cadre.
   const dist = body.rings ? (bleed ? 10.6 : 12.8) : isStar ? 9.5 : bleed ? 6.2 : 6;
 
@@ -276,11 +280,16 @@ export function BodyView3D({
         ...style,
       };
 
+  // le halo du Soleil DÉPEND du bloom → si le bloom est coupé (qualité basse),
+  // on force un petit bloom local juste pour l'étoile.
+  const withBloom = q.bloom !== 'off' || isStar;
+
   return (
     <div className={className} style={wrapStyle} aria-hidden>
       <Canvas
-        dpr={[1, 2]}
-        gl={{ antialias: true }}
+        key={q.tier}
+        dpr={q.dpr}
+        gl={{ antialias: q.antialias, powerPreference: q.powerPreference }}
         camera={{ fov: 30, position: [0, 0, dist] }}
         onCreated={({ camera }) => camera.lookAt(0, 0, 0)}
       >
@@ -296,17 +305,19 @@ export function BodyView3D({
               <directionalLight position={[3.4, -1.2, 1.8]} intensity={0.55} color="#9fb4e0" />
             </>
           )}
-          <Sphere body={body} silhouette={silhouette} spin={spin} moons={moons} />
-          <EffectComposer multisampling={0}>
-            <Bloom
-              mipmapBlur
-              kernelSize={KernelSize.LARGE}
-              luminanceThreshold={isStar ? 0.5 : 0.85}
-              luminanceSmoothing={0.4}
-              intensity={isStar ? 0.9 : 0.3}
-              radius={0.7}
-            />
-          </EffectComposer>
+          <Sphere body={body} silhouette={silhouette} spin={spin} moons={moons} seg={seg} />
+          {withBloom && (
+            <EffectComposer multisampling={0}>
+              <Bloom
+                mipmapBlur
+                kernelSize={q.bloom === 'high' ? KernelSize.HUGE : KernelSize.LARGE}
+                luminanceThreshold={isStar ? 0.5 : 0.85}
+                luminanceSmoothing={0.4}
+                intensity={isStar ? 0.9 : 0.3}
+                radius={0.7}
+              />
+            </EffectComposer>
+          )}
         </Suspense>
       </Canvas>
     </div>

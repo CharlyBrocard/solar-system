@@ -1,0 +1,99 @@
+import { useMemo } from 'react';
+import type { GraphicsPref } from '@/store/progress';
+import { useProgress } from '@/store/progress';
+
+/**
+ * Qualité de rendu 3D : trois paliers + une détection automatique d'après
+ * l'appareil. Tout ce qui coûte cher (résolution, post-traitement, densité de
+ * géométrie) est piloté d'ici pour que la scène tourne sur une tablette d'école
+ * comme sur une machine récente.
+ */
+
+export type QualityTier = 'bas' | 'moyen' | 'eleve';
+
+export interface QualitySettings {
+  tier: QualityTier;
+  /** plage `dpr` du <Canvas> */
+  dpr: [number, number];
+  antialias: boolean;
+  powerPreference: WebGLPowerPreference;
+  /** niveau de bloom (post-traitement) */
+  bloom: 'off' | 'low' | 'high';
+  /** segments max d'une grande sphère */
+  sphereSegments: number;
+  /** nombre de cailloux dans la ceinture d'astéroïdes */
+  beltCount: number;
+  /** nombre d'étoiles du fond */
+  starCount: number;
+  /** relief procédural (normal maps) sur les astres — consommé plus tard */
+  normalMaps: boolean;
+}
+
+const TIERS: Record<QualityTier, QualitySettings> = {
+  bas: {
+    tier: 'bas',
+    dpr: [1, 1],
+    antialias: false,
+    powerPreference: 'low-power',
+    bloom: 'off',
+    sphereSegments: 28,
+    beltCount: 55,
+    starCount: 900,
+    normalMaps: false,
+  },
+  moyen: {
+    tier: 'moyen',
+    dpr: [1, 1.5],
+    antialias: true,
+    powerPreference: 'default',
+    bloom: 'low',
+    sphereSegments: 40,
+    beltCount: 110,
+    starCount: 2200,
+    normalMaps: true,
+  },
+  eleve: {
+    tier: 'eleve',
+    dpr: [1, 2],
+    antialias: true,
+    powerPreference: 'high-performance',
+    bloom: 'high',
+    sphereSegments: 60,
+    beltCount: 165,
+    starCount: 3400,
+    normalMaps: true,
+  },
+};
+
+let detected: QualityTier | null = null;
+
+/** Estime le palier d'après l'appareil (calculé une seule fois). */
+export function detectTier(): QualityTier {
+  if (detected) return detected;
+  if (typeof navigator === 'undefined') return (detected = 'moyen');
+
+  const cores = navigator.hardwareConcurrency || 4;
+  // `deviceMemory` : Chrome uniquement, plafonné à 8 (Go)
+  const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 4;
+  const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+  let score = 0;
+  score += cores >= 8 ? 2 : cores >= 4 ? 1 : 0;
+  score += mem >= 8 ? 2 : mem >= 4 ? 1 : 0;
+  score += mobile ? 0 : 1;
+
+  detected = score >= 4 ? 'eleve' : score >= 2 ? 'moyen' : 'bas';
+  return detected;
+}
+
+export function resolveQuality(pref: GraphicsPref | undefined): QualitySettings {
+  const tier: QualityTier =
+    pref === 'bas' || pref === 'moyen' || pref === 'eleve' ? pref : detectTier();
+  return TIERS[tier];
+}
+
+/** Réglages de qualité effectifs (résout `auto` selon l'appareil). */
+export function useQuality(): QualitySettings {
+  const pref = useProgress((s) => s.prefs?.graphics);
+  return useMemo(() => resolveQuality(pref), [pref]);
+}

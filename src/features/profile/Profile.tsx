@@ -6,23 +6,32 @@ import { BottomNav } from '@/components/BottomNav';
 import BADGES from '@/data/badges';
 import { bodyById, TYPE_LABEL } from '@/data/bodies';
 import { currentLevel, POINTS_PER_LEVEL, useProgress } from '@/store/progress';
-import type { Prefs } from '@/store/progress';
+import type { GraphicsPref } from '@/store/progress';
 import { unlockedZones } from '@/store/selectors';
 import { ambient } from '@/lib/ambient';
 import { speak } from '@/lib/speech';
 import styles from './Profile.module.css';
 
-const PREF_LABELS: Record<keyof Prefs, string> = {
+type BoolPref = 'readAloud' | 'simplified' | 'ambientSound';
+
+const PREF_LABELS: Record<BoolPref, string> = {
   readAloud: 'Lecture des textes à voix haute',
   simplified: 'Mode simplifié (8-10 ans)',
   ambientSound: 'Ambiance sonore',
 };
 
-const PREF_HINTS: Record<keyof Prefs, string> = {
+const PREF_HINTS: Record<BoolPref, string> = {
   readAloud: 'Chaque fiche est lue automatiquement quand tu l’ouvres.',
   simplified: 'Textes plus gros, aérés, et on masque les détails techniques.',
   ambientSound: 'Une nappe sonore très douce en fond d’exploration.',
 };
+
+const GRAPHICS_OPTIONS: { value: GraphicsPref; label: string }[] = [
+  { value: 'auto', label: 'Auto' },
+  { value: 'bas', label: 'Basse' },
+  { value: 'moyen', label: 'Moyenne' },
+  { value: 'eleve', label: 'Élevée' },
+];
 
 export function Profile() {
   const explorerName = useProgress((s) => s.explorerName);
@@ -136,7 +145,7 @@ export function Profile() {
 
           <div className={styles.panel}>
             <span className={styles.sectionLabel}>Préférences</span>
-            {(Object.keys(PREF_LABELS) as (keyof Prefs)[]).map((key) => (
+            {(Object.keys(PREF_LABELS) as BoolPref[]).map((key) => (
               <div key={key} className={styles.pref}>
                 <span className={styles.prefText}>
                   <span className={styles.prefLabel}>{PREF_LABELS[key]}</span>
@@ -162,6 +171,30 @@ export function Profile() {
                 </button>
               </div>
             ))}
+
+            <div className={styles.pref}>
+              <span className={styles.prefText}>
+                <span className={styles.prefLabel}>Qualité des graphismes</span>
+                <span className={styles.prefHint}>
+                  « Auto » s’adapte à ton appareil. Baisse-la si l’exploration
+                  saccade.
+                </span>
+              </span>
+              <div className={styles.segmented} role="group" aria-label="Qualité des graphismes">
+                {GRAPHICS_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={styles.segBtn}
+                    data-on={prefs.graphics === opt.value ? 'true' : undefined}
+                    aria-pressed={prefs.graphics === opt.value}
+                    onClick={() => setPref('graphics', opt.value)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>

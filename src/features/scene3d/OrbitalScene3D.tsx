@@ -33,6 +33,7 @@ import {
   SIZE_SCALE,
   worldRadius,
 } from './scene3d';
+import { useQuality, type QualitySettings } from './quality';
 import styles from './OrbitalScene3D.module.css';
 
 type OrbitControlsRef = ComponentRef<typeof OrbitControls>;
@@ -56,11 +57,13 @@ function CenterBody({
   body,
   radius,
   reduced,
+  segMax,
   onClick,
 }: {
   body: Body;
   radius: number;
   reduced: boolean;
+  segMax: number;
   onClick?: () => void;
 }) {
   const mesh = useRef<THREE.Mesh>(null);
@@ -107,10 +110,12 @@ function CenterBody({
       }
     : {};
 
+  const seg = Math.max(24, segMax);
+
   return (
     <group>
       <mesh ref={mesh} {...pointer}>
-        <sphereGeometry args={[radius, 48, 48]} />
+        <sphereGeometry args={[radius, seg, seg]} />
         {isStar ? (
           <meshBasicMaterial map={map} color={[2.1, 1.55, 0.85]} toneMapped={false} />
         ) : (
@@ -160,6 +165,7 @@ function Pin({
   driftRef,
   hovered,
   reduced,
+  segMax,
   onHover,
   onSelect,
 }: {
@@ -168,14 +174,16 @@ function Pin({
   driftRef: DriftRef;
   hovered: boolean;
   reduced: boolean;
+  segMax: number;
   onHover: (id: string | null) => void;
   onSelect: (b: Body) => void;
 }) {
   const group = useRef<THREE.Group>(null);
   const mesh = useRef<THREE.Mesh>(null);
   const radius = worldRadius(body.size, 0.45, 5.4);
-  // segments proportionnels à la taille : les petites naines lointaines restent légères
-  const segs = THREE.MathUtils.clamp(Math.round(radius * 9), 14, 44);
+  // segments proportionnels à la taille (plafonnés par la qualité) : les petites
+  // naines lointaines restent légères.
+  const segs = THREE.MathUtils.clamp(Math.round(radius * 9), 12, segMax);
   const banded = !!body.banded;
   const atmosphere = ATMOSPHERE[body.id];
   const map = useMemo(
@@ -379,7 +387,15 @@ function OrbitRing3D({
 
 /* ── cailloux de la ceinture ──────────────────────────────────────────── */
 
-function BeltDots({ dots, driftRef }: { dots: NonNullable<OrbitalSceneProps['decorativeDots']>; driftRef: DriftRef }) {
+function BeltDots({
+  dots,
+  driftRef,
+  count,
+}: {
+  dots: NonNullable<OrbitalSceneProps['decorativeDots']>;
+  driftRef: DriftRef;
+  count: number;
+}) {
   const ref = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const tmp = useMemo(() => new THREE.Vector3(), []);
@@ -399,7 +415,7 @@ function BeltDots({ dots, driftRef }: { dots: NonNullable<OrbitalSceneProps['dec
       t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
-    return Array.from({ length: 150 }, () => ({
+    return Array.from({ length: count }, () => ({
       r: rMin + (rMax - rMin) * Math.sqrt(rnd()),
       a: rnd() * 360,
       y: (rnd() - 0.5) * 2.2,
@@ -410,7 +426,7 @@ function BeltDots({ dots, driftRef }: { dots: NonNullable<OrbitalSceneProps['dec
       rz: rnd() * 6,
       spin: 0.2 + rnd() * 0.9,
     }));
-  }, [dots]);
+  }, [dots, count]);
 
   useEffect(() => {
     const m = ref.current;
@@ -796,12 +812,14 @@ function Scene({
   props,
   controls,
   sceneRadius,
+  quality,
   onDiveColor,
   onDiveProgress,
 }: {
   props: OrbitalSceneProps;
   controls: React.RefObject<OrbitControlsRef>;
   sceneRadius: number;
+  quality: QualitySettings;
   onDiveColor: (c: string | null) => void;
   onDiveProgress: (t: number) => void;
 }) {
@@ -877,7 +895,7 @@ function Scene({
       <Stars
         radius={sceneRadius * 2.4}
         depth={sceneRadius}
-        count={3200}
+        count={quality.starCount}
         factor={4}
         saturation={0}
         fade
@@ -899,6 +917,7 @@ function Scene({
           body={centerBody}
           radius={centerRadius}
           reduced={reduced}
+          segMax={quality.sphereSegments}
           onClick={onCenterClick}
         />
       )}
@@ -911,13 +930,14 @@ function Scene({
           driftRef={driftRef}
           hovered={hoveredId === p.body.id}
           reduced={reduced}
+          segMax={quality.sphereSegments}
           onHover={onHover}
           onSelect={onSelect}
         />
       ))}
 
       {decorativeDots && decorativeDots.length > 0 && (
-        <BeltDots dots={decorativeDots} driftRef={driftRef} />
+        <BeltDots dots={decorativeDots} driftRef={driftRef} count={quality.beltCount} />
       )}
 
       {beltMarker && <BeltMarker3D marker={beltMarker} />}
@@ -967,17 +987,19 @@ function Scene({
         onDone={(id) => onDiveComplete?.(id)}
       />
 
-      <EffectComposer multisampling={0}>
-        <Bloom
-          mipmapBlur
-          levels={8}
-          kernelSize={KernelSize.HUGE}
-          luminanceThreshold={0.62}
-          luminanceSmoothing={0.35}
-          intensity={0.7}
-          radius={0.78}
-        />
-      </EffectComposer>
+      {quality.bloom !== 'off' && (
+        <EffectComposer multisampling={0}>
+          <Bloom
+            mipmapBlur
+            levels={quality.bloom === 'high' ? 8 : 6}
+            kernelSize={quality.bloom === 'high' ? KernelSize.HUGE : KernelSize.LARGE}
+            luminanceThreshold={0.62}
+            luminanceSmoothing={0.35}
+            intensity={0.7}
+            radius={quality.bloom === 'high' ? 0.78 : 0.7}
+          />
+        </EffectComposer>
+      )}
     </>
   );
 }
@@ -986,6 +1008,7 @@ function Scene({
 
 export function OrbitalScene3D(props: OrbitalSceneProps) {
   const controls = useRef<OrbitControlsRef>(null);
+  const quality = useQuality();
   const [diveColor, setDiveColor] = useState<string | null>(null);
   const [diveT, setDiveT] = useState(0);
   // opacité du voile pilotée par la progression de la plongée (même horloge que
@@ -1014,8 +1037,13 @@ export function OrbitalScene3D(props: OrbitalSceneProps) {
   return (
     <div className={styles.wrap} style={{ background: props.background }} onWheelCapture={onWheel}>
       <Canvas
-        dpr={[1, 1.85]}
-        gl={{ antialias: true, toneMappingExposure: 1.05, powerPreference: 'high-performance' }}
+        key={quality.tier}
+        dpr={quality.dpr}
+        gl={{
+          antialias: quality.antialias,
+          toneMappingExposure: 1.05,
+          powerPreference: quality.powerPreference,
+        }}
         camera={{ fov: 44, position: [0, 60, 110] }}
       >
         <Suspense fallback={null}>
@@ -1023,6 +1051,7 @@ export function OrbitalScene3D(props: OrbitalSceneProps) {
             props={props}
             controls={controls}
             sceneRadius={sceneRadius}
+            quality={quality}
             onDiveColor={setDiveColor}
             onDiveProgress={setDiveT}
           />

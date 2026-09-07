@@ -6,10 +6,14 @@ import { discoveryBadgeFor } from '@/data/badges';
 
 // État de jeu persistant (nom, découvertes, badges, quêtes, points, préférences).
 
+/** Qualité de rendu 3D. `auto` = choisie d'après l'appareil au 1er lancement. */
+export type GraphicsPref = 'auto' | 'bas' | 'moyen' | 'eleve';
+
 export interface Prefs {
   readAloud: boolean;
   simplified: boolean;
   ambientSound: boolean;
+  graphics: GraphicsPref;
 }
 
 export interface ProgressState {
@@ -76,7 +80,12 @@ const initialState = {
   tutorialSeen: false,
   points: 0,
   realScaleMode: false,
-  prefs: { readAloud: false, simplified: false, ambientSound: false } as Prefs,
+  prefs: {
+    readAloud: false,
+    simplified: false,
+    ambientSound: false,
+    graphics: 'auto',
+  } as Prefs,
   pendingDiscovery: null as string | null,
   pendingBadges: [] as string[],
   pendingQuestCompletions: [] as string[],
@@ -159,7 +168,7 @@ export const useProgress = create<ProgressState>()(
     }),
     {
       name: 'solarsystem.progress',
-      version: 2,
+      version: 3,
       // état transitoire : jamais persisté
       partialize: ({
         pendingDiscovery: _pd,
@@ -168,9 +177,34 @@ export const useProgress = create<ProgressState>()(
         realScaleMode: _rs,
         ...rest
       }) => rest,
-      migrate: (persisted) => {
+      migrate: (persisted, from) => {
         const p = (persisted ?? {}) as Partial<ProgressState>;
-        return { ...p, quizPassed: [], compareUsed: false } as unknown as ProgressState;
+        const base: Partial<ProgressState> = {
+          ...p,
+          prefs: {
+            readAloud: false,
+            simplified: false,
+            ambientSound: false,
+            graphics: 'auto',
+            ...(p.prefs ?? {}),
+          } as Prefs,
+        };
+        // v1 → v2 : le format quiz/compare a changé, on remet à zéro ces deux-là.
+        if (from < 2) {
+          base.quizPassed = [];
+          base.compareUsed = false;
+        }
+        return base as unknown as ProgressState;
+      },
+      // fusion profonde des prefs : une sauvegarde ancienne ne doit jamais
+      // effacer une clé de préférence ajoutée depuis.
+      merge: (persisted, current) => {
+        const s = (persisted ?? {}) as Partial<ProgressState>;
+        return {
+          ...current,
+          ...s,
+          prefs: { ...current.prefs, ...(s.prefs ?? {}) },
+        };
       },
     },
   ),
