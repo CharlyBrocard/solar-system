@@ -16,6 +16,7 @@ import {
 import { ATMOSPHERE, prefersReducedMotion } from './scene3d';
 import { useQuality } from './quality';
 import { AtmosphereRim } from './AtmosphereRim';
+import { SunMaterial } from './SunSurface';
 
 /**
  * Rendu 3D d'un seul astre — même matière/éclairage que la scène orbitale, mais
@@ -79,9 +80,13 @@ function Sphere({
   moons,
   seg,
   normalMaps,
+  sunShader,
+  sunOctaves,
 }: Pick<BodyView3DProps, 'body' | 'silhouette' | 'spin' | 'moons'> & {
   seg: number;
   normalMaps: boolean;
+  sunShader: boolean;
+  sunOctaves: number;
 }) {
   const mesh = useRef<THREE.Mesh>(null);
   const isStar = body.type === 'star';
@@ -161,7 +166,11 @@ function Sphere({
       <mesh ref={mesh}>
         <sphereGeometry args={[1, seg, seg]} />
         {isStar ? (
-          <meshBasicMaterial map={map ?? undefined} color={[2.3, 1.7, 0.95]} toneMapped={false} />
+          sunShader ? (
+            <SunMaterial reduced={reduced} octaves={sunOctaves} intensity={2.1} />
+          ) : (
+            <meshBasicMaterial map={map ?? undefined} color={[2.3, 1.7, 0.95]} toneMapped={false} />
+          )
         ) : (
           <meshStandardMaterial
             map={map ?? undefined}
@@ -323,6 +332,8 @@ export function BodyView3D({
             moons={moons}
             seg={seg}
             normalMaps={q.normalMaps}
+            sunShader={q.sunShader}
+            sunOctaves={q.sunOctaves}
           />
           {withBloom && (
             <EffectComposer multisampling={0}>

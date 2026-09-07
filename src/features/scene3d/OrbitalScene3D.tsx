@@ -24,6 +24,7 @@ import {
   terrainTexture,
 } from './materials';
 import { AtmosphereRim } from './AtmosphereRim';
+import { SunMaterial } from './SunSurface';
 import {
   alphaOf,
   ATMOSPHERE,
@@ -61,6 +62,8 @@ function CenterBody({
   reduced,
   segMax,
   normalMaps,
+  sunShader,
+  sunOctaves,
   onClick,
 }: {
   body: Body;
@@ -68,6 +71,8 @@ function CenterBody({
   reduced: boolean;
   segMax: number;
   normalMaps: boolean;
+  sunShader: boolean;
+  sunOctaves: number;
   onClick?: () => void;
 }) {
   const mesh = useRef<THREE.Mesh>(null);
@@ -129,7 +134,11 @@ function CenterBody({
       <mesh ref={mesh} {...pointer}>
         <sphereGeometry args={[radius, seg, seg]} />
         {isStar ? (
-          <meshBasicMaterial map={map} color={[2.1, 1.55, 0.85]} toneMapped={false} />
+          sunShader ? (
+            <SunMaterial reduced={reduced} octaves={sunOctaves} intensity={1.9} />
+          ) : (
+            <meshBasicMaterial map={map} color={[2.1, 1.55, 0.85]} toneMapped={false} />
+          )
         ) : (
           <meshStandardMaterial
             map={map}
@@ -924,6 +933,8 @@ function Scene({
           reduced={reduced}
           segMax={quality.sphereSegments}
           normalMaps={quality.normalMaps}
+          sunShader={quality.sunShader}
+          sunOctaves={quality.sunOctaves}
           onClick={onCenterClick}
         />
       )}

@@ -25,8 +25,12 @@ export interface QualitySettings {
   beltCount: number;
   /** nombre d'étoiles du fond */
   starCount: number;
-  /** relief procédural (normal maps) sur les astres — consommé plus tard */
+  /** relief procédural (normal maps) sur les astres */
   normalMaps: boolean;
+  /** surface du Soleil : shader animé (true) ou texture figée (false) */
+  sunShader: boolean;
+  /** octaves de bruit pour le shader du Soleil */
+  sunOctaves: number;
 }
 
 const TIERS: Record<QualityTier, QualitySettings> = {
@@ -40,6 +44,8 @@ const TIERS: Record<QualityTier, QualitySettings> = {
     beltCount: 55,
     starCount: 900,
     normalMaps: false,
+    sunShader: false,
+    sunOctaves: 0,
   },
   moyen: {
     tier: 'moyen',
@@ -51,6 +57,8 @@ const TIERS: Record<QualityTier, QualitySettings> = {
     beltCount: 110,
     starCount: 2200,
     normalMaps: true,
+    sunShader: true,
+    sunOctaves: 3,
   },
   eleve: {
     tier: 'eleve',
@@ -62,6 +70,8 @@ const TIERS: Record<QualityTier, QualitySettings> = {
     beltCount: 165,
     starCount: 3400,
     normalMaps: true,
+    sunShader: true,
+    sunOctaves: 5,
   },
 };
 
