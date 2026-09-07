@@ -320,7 +320,8 @@
     font-size: 26px;
   }
   .back {
-    display: none;
+    padding: 7px 12px;
+    font-size: 13px;
   }
   .duo {
     grid-template-columns: 1fr;

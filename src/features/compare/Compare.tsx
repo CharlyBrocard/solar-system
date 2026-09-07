@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BodySphere } from '@/components/BodySphere';
 import BODIES, { TYPE_LABEL, bodyById } from '@/data/bodies';
@@ -81,17 +81,15 @@ export function Compare() {
 
   const [picking, setPicking] = useState<'a' | 'b' | null>(null);
 
-  useEffect(() => {
-    if (a && b && discovered.includes(a.id) && discovered.includes(b.id)) {
-      markCompareUsed();
-    }
-  }, [a, b, discovered, markCompareUsed]);
-
+  // On valide la quête « comparateur » quand l'enfant choisit lui-même un astre,
+  // pas au simple chargement de la page (les côtés ont une valeur par défaut).
   const setSide = (side: 'a' | 'b', id: string) => {
     const next = new URLSearchParams(params);
     next.set(side, id);
     setParams(next, { replace: true });
     setPicking(null);
+    const other = side === 'a' ? b : a;
+    if (discovered.includes(id) && other && discovered.includes(other.id)) markCompareUsed();
   };
 
   const enoughKnown = known.length >= 2;
