@@ -66,10 +66,12 @@ function Backdrop() {
 function CenterBody({
   body,
   radius,
+  reduced,
   onClick,
 }: {
   body: Body;
   radius: number;
+  reduced: boolean;
   onClick?: () => void;
 }) {
   const mesh = useRef<THREE.Mesh>(null);
@@ -100,7 +102,7 @@ function CenterBody({
   );
 
   useFrame((_, dt) => {
-    if (mesh.current) mesh.current.rotation.y += dt * (isStar ? 0.02 : 0.05);
+    if (mesh.current && !reduced) mesh.current.rotation.y += dt * (isStar ? 0.02 : 0.05);
   });
 
   const pointer = onClick
@@ -168,6 +170,7 @@ function Pin({
   revealed,
   driftRef,
   hovered,
+  reduced,
   onHover,
   onSelect,
 }: {
@@ -175,6 +178,7 @@ function Pin({
   revealed: boolean;
   driftRef: DriftRef;
   hovered: boolean;
+  reduced: boolean;
   onHover: (id: string | null) => void;
   onSelect: (b: Body) => void;
 }) {
@@ -197,7 +201,7 @@ function Pin({
       orbitPosition(body, driftRef.current, tmp);
       group.current.position.copy(tmp);
     }
-    if (mesh.current && revealed) mesh.current.rotation.y += dt * spin;
+    if (mesh.current && revealed && !reduced) mesh.current.rotation.y += dt * spin;
   });
 
   return (
@@ -562,6 +566,7 @@ function CameraRig({
   zoomRange,
   interactive,
   diving,
+  reduced,
   recenterKey,
   controls,
 }: {
@@ -570,6 +575,7 @@ function CameraRig({
   zoomRange: [number, number];
   interactive: boolean;
   diving: boolean;
+  reduced: boolean;
   recenterKey: boolean;
   controls: React.RefObject<OrbitControlsRef>;
 }) {
@@ -672,7 +678,9 @@ function CameraRig({
       }
     }
 
-    if (!interactive) c.setAzimuthalAngle(c.getAzimuthalAngle() + dt * 0.03);
+    if (!interactive && !reduced) {
+      c.setAzimuthalAngle(c.getAzimuthalAngle() + dt * 0.03);
+    }
     c.update();
   });
 
@@ -844,7 +852,15 @@ function Scene({
         />
       )}
       <Backdrop />
-      <Stars radius={sceneRadius * 2.4} depth={sceneRadius} count={3200} factor={4} saturation={0} fade speed={0.32} />
+      <Stars
+        radius={sceneRadius * 2.4}
+        depth={sceneRadius}
+        count={3200}
+        factor={4}
+        saturation={0}
+        fade
+        speed={reduced ? 0 : 0.32}
+      />
 
       {rings.map((r) => (
         <OrbitRing3D
@@ -857,7 +873,12 @@ function Scene({
       ))}
 
       {centerBody && (
-        <CenterBody body={centerBody} radius={centerRadius} onClick={onCenterClick} />
+        <CenterBody
+          body={centerBody}
+          radius={centerRadius}
+          reduced={reduced}
+          onClick={onCenterClick}
+        />
       )}
 
       {pins.map((p) => (
@@ -867,6 +888,7 @@ function Scene({
           revealed={p.revealed}
           driftRef={driftRef}
           hovered={hoveredId === p.body.id}
+          reduced={reduced}
           onHover={onHover}
           onSelect={onSelect}
         />
@@ -907,6 +929,7 @@ function Scene({
         zoomRange={zoomRange}
         interactive={interactive}
         diving={!!diveTo}
+        reduced={reduced}
         recenterKey={props.zoom === 1 && props.pan.x === 0 && props.pan.y === 0}
         controls={controls}
       />

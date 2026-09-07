@@ -92,8 +92,14 @@ export function EntryScreen() {
     </>
   );
 
+  // pendant le chargement du chunk 3D, on montre déjà le hero + le bouton sur le
+  // fond d'entrée — quand la scène arrive, elle apparaît derrière, sans coupure.
   return (
-    <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: ENTRY_BG }} />}>
+    <Suspense
+      fallback={
+        <div style={{ position: 'fixed', inset: 0, background: ENTRY_BG }}>{sceneChildren}</div>
+      }
+    >
       <OrbitalScene3D {...sceneProps}>{sceneChildren}</OrbitalScene3D>
     </Suspense>
   );

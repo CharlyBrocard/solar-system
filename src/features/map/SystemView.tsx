@@ -202,7 +202,11 @@ export function SystemView() {
   );
 
   return (
-    <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: '#0b0a1d' }} />}>
+    <Suspense
+      fallback={
+        <div style={{ position: 'fixed', inset: 0, background: '#0b0a1d' }}>{sceneChildren}</div>
+      }
+    >
       <OrbitalScene3D {...sceneProps}>{sceneChildren}</OrbitalScene3D>
     </Suspense>
   );
