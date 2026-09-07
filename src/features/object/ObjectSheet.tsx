@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { BodySphere } from '@/components/BodySphere';
+import { BodyHero } from '@/components/BodyHero';
 import { bodyById, moonsOf, TYPE_LABEL } from '@/data/bodies';
 import type { Body, BodyType } from '@/data/types';
 import { ZONE_META } from '@/data/zones';
@@ -87,7 +87,7 @@ function DiscoveredSheet({ body, onBack, onGo }: SheetProps) {
       <div className={styles.particles} />
       {body.type === 'star' && <div className={styles.backdropGlow} />}
       <div className={styles.backdropBody}>
-        <BodySphere body={body} size={Math.min(body.size * 4.5, 240)} />
+        <BodyHero body={body} size={Math.min(body.size * 4.5, 240)} tint="#261c48" />
       </div>
       <div className={styles.veil} />
 
@@ -109,7 +109,7 @@ function DiscoveredSheet({ body, onBack, onGo }: SheetProps) {
         </div>
 
         <div className={styles.identity}>
-          <BodySphere body={body} size={104} />
+          <BodyHero body={body} size={104} tint="#2a2050" />
           <div className={styles.identityText}>
             <h1 className={styles.name}>{body.name}</h1>
             <span className={styles.typeRow}>
@@ -211,7 +211,7 @@ function LockedSheet({
       <div className={styles.nebula} />
       <div className={styles.particles} />
       <div className={styles.backdropBody}>
-        <BodySphere body={body} size={Math.min(body.size * 4, 200)} silhouette />
+        <BodyHero body={body} size={Math.min(body.size * 4, 200)} silhouette tint="#221a44" />
       </div>
       <div className={styles.veil} />
 

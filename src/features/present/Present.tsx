@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { BodySphere } from '@/components/BodySphere';
+import { BodyHero } from '@/components/BodyHero';
 import { bodyById, codexOrder } from '@/data/bodies';
 import type { BodyType } from '@/data/types';
 import { describeBody, fmtDay, fmtDiameter, fmtTemp, fmtYear } from '@/data/format';
@@ -84,7 +84,7 @@ export function Present() {
 
       <div className={styles.row}>
         <div className={styles.figure} style={{ width: sphereSize, height: sphereSize }}>
-          <BodySphere body={body} size={sphereSize} />
+          <BodyHero body={body} size={sphereSize} tint="#302247" />
         </div>
 
         <div className={styles.info}>

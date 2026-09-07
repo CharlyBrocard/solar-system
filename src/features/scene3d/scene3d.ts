@@ -5,6 +5,18 @@ import type { Body } from '@/data/types';
 export const ORBIT_SCALE = 1 / 7;
 export const SIZE_SCALE = 1 / 12;
 
+/** Halo d'atmosphère (couleur) pour les corps qui en ont une visible. */
+export const ATMOSPHERE: Record<string, string> = {
+  terre: '#8ec9ef',
+  venus: '#f6dfb0',
+  mars: '#e9a97e',
+  titan: '#e0a869',
+  jupiter: '#e9c48a',
+  saturne: '#efdcb2',
+  uranus: '#a8e6e2',
+  neptune: '#7fa8f0',
+};
+
 /** Inclinaison par défaut du plan (° au-dessus de l'écliptique). */
 export const ELEVATION_DEG = 33;
 

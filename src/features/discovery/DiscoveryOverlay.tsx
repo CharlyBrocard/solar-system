@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BodySphere } from '@/components/BodySphere';
+import { BodyHero } from '@/components/BodyHero';
 import { bodyById, TOTAL_BODIES } from '@/data/bodies';
 import { badgeById } from '@/data/badges';
 import { useProgress } from '@/store/progress';
@@ -51,7 +51,7 @@ export function DiscoveryOverlay() {
         </span>
 
         <div className={styles.sphereWrap}>
-          <BodySphere body={body} size={190} />
+          <BodyHero body={body} size={190} tint="#2b2253" />
         </div>
 
         <h2 className={styles.name}>{body.name}</h2>

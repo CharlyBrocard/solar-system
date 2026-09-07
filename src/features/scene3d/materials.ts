@@ -189,12 +189,19 @@ export function radialSprite(key: string, stops: [number, string][]): THREE.Text
     stops.forEach(([o, col]) => g.addColorStop(o, col));
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, N, N);
-    // léger grain : casse le banding des dégradés 8 bits une fois étirés + bloomés
+    // léger grain : casse le banding des dégradés 8 bits une fois étirés + bloomés.
+    // Confiné au disque : les coins doivent rester parfaitement transparents,
+    // sinon un sprite très agrandi laisse voir un halo carré.
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(N / 2, N / 2, N / 2, 0, Math.PI * 2);
+    ctx.clip();
     ctx.globalAlpha = 0.025;
     for (let i = 0; i < 2600; i++) {
       ctx.fillStyle = Math.random() > 0.5 ? '#ffffff' : '#000000';
       ctx.fillRect(Math.random() * N, Math.random() * N, 1, 1);
     }
+    ctx.restore();
     ctx.globalAlpha = 1;
     const t = new THREE.CanvasTexture(c);
     t.colorSpace = THREE.SRGBColorSpace;

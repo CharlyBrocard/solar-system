@@ -24,6 +24,7 @@ import {
 } from './materials';
 import {
   alphaOf,
+  ATMOSPHERE,
   DRIFT_DEG_PER_SEC,
   ELEVATION_DEG,
   ORBIT_SCALE,
@@ -36,18 +37,6 @@ import styles from './OrbitalScene3D.module.css';
 
 type OrbitControlsRef = ComponentRef<typeof OrbitControls>;
 type DriftRef = MutableRefObject<number>;
-
-/** Halo d'atmosphère (couleur) pour les corps qui en ont une visible. */
-const ATMOSPHERE: Record<string, string> = {
-  terre: '#8ec9ef',
-  venus: '#f6dfb0',
-  mars: '#e9a97e',
-  titan: '#e0a869',
-  jupiter: '#e9c48a',
-  saturne: '#efdcb2',
-  uranus: '#a8e6e2',
-  neptune: '#7fa8f0',
-};
 
 /* ── fond ─────────────────────────────────────────────────────────────── */
 
