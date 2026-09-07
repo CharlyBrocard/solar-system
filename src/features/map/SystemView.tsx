@@ -5,9 +5,9 @@ import type { Body, Zone } from '@/data/types';
 import { ZONE_META } from '@/data/zones';
 import { useProgress, ZONE_ORDER } from '@/store/progress';
 import { unlockedZones } from '@/store/selectors';
-import { RINGS } from './geometry';
-import { OrbitalScene, ringColor } from '@/features/scene/OrbitalScene';
-import type { OrbitalSceneProps, ScenePin } from '@/features/scene/OrbitalScene';
+import { RINGS } from './rings';
+import { ringColor } from '@/features/scene/types';
+import type { OrbitalSceneProps, ScenePin } from '@/features/scene/types';
 import { ActiveQuestCard } from '@/features/quests/ActiveQuestCard';
 import { SearchOverlay } from '@/features/search/SearchOverlay';
 import { Hud } from './Hud';
@@ -15,9 +15,7 @@ import { RealScaleView } from './RealScaleView';
 import { SealedZoneCard } from './SealedZoneCard';
 import { Tutorial } from './Tutorial';
 
-import { use3dScene } from '@/features/scene3d/use3dFlag';
-
-// Scène 3D derrière un flag (`?r3d=1`) — chargée en lazy.
+// Scène 3D (react-three-fiber) — chargée en lazy : three.js reste un chunk à part.
 const OrbitalScene3D = lazy(() => import('@/features/scene3d/OrbitalScene3D'));
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(v, hi));
@@ -144,8 +142,6 @@ export function SystemView() {
 
   if (realScale) return <RealScaleView onClose={exitRealScale} />;
 
-  const use3d = use3dScene();
-
   const sceneProps: OrbitalSceneProps = {
     background: SCENE_BG,
     origin: [50, 55],
@@ -205,15 +201,9 @@ export function SystemView() {
     </>
   );
 
-  if (use3d) {
-    return (
-      <Suspense
-        fallback={<div style={{ position: 'fixed', inset: 0, background: '#0b0a1d' }} />}
-      >
-        <OrbitalScene3D {...sceneProps}>{sceneChildren}</OrbitalScene3D>
-      </Suspense>
-    );
-  }
-
-  return <OrbitalScene {...sceneProps}>{sceneChildren}</OrbitalScene>;
+  return (
+    <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: '#0b0a1d' }} />}>
+      <OrbitalScene3D {...sceneProps}>{sceneChildren}</OrbitalScene3D>
+    </Suspense>
+  );
 }

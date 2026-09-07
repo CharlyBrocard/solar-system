@@ -6,9 +6,8 @@ import { ZONE_META } from '@/data/zones';
 import { useProgress } from '@/store/progress';
 import { useBlurb } from '@/store/useBlurb';
 import { unlockedZones } from '@/store/selectors';
-import { OrbitalScene, ringColor } from '@/features/scene/OrbitalScene';
-import type { OrbitalSceneProps, ScenePin } from '@/features/scene/OrbitalScene';
-import { use3dScene } from '@/features/scene3d/use3dFlag';
+import { ringColor } from '@/features/scene/types';
+import type { OrbitalSceneProps, ScenePin } from '@/features/scene/types';
 import styles from './ZoneView.module.css';
 
 const OrbitalScene3D = lazy(() => import('@/features/scene3d/OrbitalScene3D'));
@@ -124,8 +123,6 @@ export function ZoneView() {
     navigate(`/object/${bid}`);
   };
 
-  const use3d = use3dScene();
-
   const sceneProps: OrbitalSceneProps = {
     background: config.bg,
     origin: [46, 54],
@@ -208,15 +205,9 @@ export function ZoneView() {
     </>
   );
 
-  if (use3d) {
-    return (
-      <Suspense
-        fallback={<div style={{ position: 'fixed', inset: 0, background: '#0b0a1d' }} />}
-      >
-        <OrbitalScene3D {...sceneProps}>{sceneChildren}</OrbitalScene3D>
-      </Suspense>
-    );
-  }
-
-  return <OrbitalScene {...sceneProps}>{sceneChildren}</OrbitalScene>;
+  return (
+    <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: '#0b0a1d' }} />}>
+      <OrbitalScene3D {...sceneProps}>{sceneChildren}</OrbitalScene3D>
+    </Suspense>
+  );
 }

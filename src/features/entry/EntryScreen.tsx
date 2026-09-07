@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { bodyById } from '@/data/bodies';
 import type { Body } from '@/data/types';
 import { useProgress } from '@/store/progress';
-import { OrbitalScene, ringColor } from '@/features/scene/OrbitalScene';
-import type { OrbitalSceneProps, SceneRing, ScenePin } from '@/features/scene/OrbitalScene';
-import { use3dScene } from '@/features/scene3d/use3dFlag';
+import { ringColor } from '@/features/scene/types';
+import type { OrbitalSceneProps, SceneRing, ScenePin } from '@/features/scene/types';
 import styles from './EntryScreen.module.css';
 
 const OrbitalScene3D = lazy(() => import('@/features/scene3d/OrbitalScene3D'));
@@ -43,8 +42,6 @@ export function EntryScreen() {
   );
 
   const enter = () => navigate(explorerName ? '/map' : '/start');
-
-  const use3d = use3dScene();
 
   const sceneProps: OrbitalSceneProps = {
     background: ENTRY_BG,
@@ -95,13 +92,9 @@ export function EntryScreen() {
     </>
   );
 
-  if (use3d) {
-    return (
-      <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: '#0b0a1d' }} />}>
-        <OrbitalScene3D {...sceneProps}>{sceneChildren}</OrbitalScene3D>
-      </Suspense>
-    );
-  }
-
-  return <OrbitalScene {...sceneProps}>{sceneChildren}</OrbitalScene>;
+  return (
+    <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: ENTRY_BG }} />}>
+      <OrbitalScene3D {...sceneProps}>{sceneChildren}</OrbitalScene3D>
+    </Suspense>
+  );
 }

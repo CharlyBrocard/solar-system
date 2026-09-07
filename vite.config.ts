@@ -34,12 +34,11 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // précache tout le bundle : l'app tient hors-ligne dès la 1re visite
+        // précache tout le bundle (three.js compris) : l'app tient hors-ligne
+        // dès la 1re visite. Le chunk three est gros (~240 Ko gz) mais fait
+        // désormais partie du cœur de l'expérience.
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-        // le 3D est encore derrière un flag → hors du précache pour l'instant
-        // Le 3D (three.js) est encore derrière un flag → hors du précache.
-        // `Bloom-*` est le chunk partagé three.js (nommé d'après postprocessing).
-        globIgnores: ['**/SpikeR3D-*', '**/OrbitalScene3D-*', '**/Bloom-*'],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
         runtimeCaching: [

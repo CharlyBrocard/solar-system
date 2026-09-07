@@ -13,7 +13,7 @@ import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { KernelSize } from 'postprocessing';
 import * as THREE from 'three';
 import type { Body } from '@/data/types';
-import type { OrbitalSceneProps } from '@/features/scene/OrbitalScene';
+import type { OrbitalSceneProps } from '@/features/scene/types';
 import {
   backdropTexture,
   bandedTexture,
