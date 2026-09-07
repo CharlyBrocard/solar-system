@@ -195,6 +195,15 @@ function Pin({
   );
   const spin = useMemo(() => 0.1 + (body.size % 7) * 0.035, [body.size]);
   const tmp = useMemo(() => new THREE.Vector3(), []);
+  const sealedGlow = useMemo(
+    () =>
+      radialSprite('sealed', [
+        [0, 'rgba(150,134,228,0.5)'],
+        [0.4, 'rgba(120,105,205,0.14)'],
+        [1, 'rgba(120,105,205,0)'],
+      ]),
+    [],
+  );
 
   useFrame((_, dt) => {
     if (group.current) {
@@ -234,26 +243,37 @@ function Pin({
           />
         ) : (
           <meshStandardMaterial
-            color="#3a2f68"
+            color="#4a3f7d"
             roughness={1}
             metalness={0}
-            emissive="#3a2f68"
-            emissiveIntensity={0.55}
+            emissive="#5646a0"
+            emissiveIntensity={0.5}
           />
         )}
       </mesh>
 
       {!revealed && (
-        <mesh scale={1.14}>
-          <sphereGeometry args={[radius, 18, 18]} />
-          <meshBasicMaterial
-            color="#b3a6e6"
-            transparent
-            opacity={0.16}
-            side={THREE.BackSide}
-            depthWrite={false}
-          />
-        </mesh>
+        <>
+          {/* bille scellée : orbe violet doux, voilé par la brume — pas un anneau */}
+          <mesh scale={1.08}>
+            <sphereGeometry args={[radius, 20, 20]} />
+            <meshBasicMaterial
+              color="#c3b6ec"
+              transparent
+              opacity={0.14}
+              side={THREE.BackSide}
+              depthWrite={false}
+            />
+          </mesh>
+          <sprite scale={[radius * 3.4, radius * 3.4, 1]}>
+            <spriteMaterial
+              map={sealedGlow}
+              transparent
+              depthWrite={false}
+              blending={THREE.AdditiveBlending}
+            />
+          </sprite>
+        </>
       )}
 
       {body.rings && revealed && <PlanetRings radius={radius} />}
