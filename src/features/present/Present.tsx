@@ -3,7 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { BodyHero } from '@/components/BodyHero';
 import { bodyById, codexOrder } from '@/data/bodies';
 import type { BodyType } from '@/data/types';
-import { describeBody, fmtDay, fmtDiameter, fmtTemp, fmtYear } from '@/data/format';
+import {
+  describeBody,
+  fmtDay,
+  fmtDiameter,
+  fmtTemp,
+  fmtYear,
+  isTidallyLocked,
+} from '@/data/format';
 import { useProgress } from '@/store/progress';
 import { useBlurb } from '@/store/useBlurb';
 import { useReadAloud } from '@/lib/speech';
@@ -69,6 +76,9 @@ export function Present() {
 
   if (!body || seenIndex === -1) return null;
 
+  const locked = isTidallyLocked(body);
+  const parentName = body.parent ? (bodyById(body.parent)?.name ?? 'sa planète') : '';
+
   return (
     <div className={styles.screen}>
       <div className={styles.neb} />
@@ -103,10 +113,14 @@ export function Present() {
             <div className={styles.stat}>
               <span className={styles.statKey}>Durée du jour</span>
               <span className={styles.statVal}>{fmtDay(body.facts.dayHours)}</span>
+              {locked && <span className={styles.statHint}>toujours la même face</span>}
             </div>
             <div className={styles.stat}>
               <span className={styles.statKey}>Durée de l'année</span>
               <span className={styles.statVal}>{fmtYear(body.facts.yearDays)}</span>
+              {locked && (
+                <span className={styles.statHint}>un tour de {parentName}</span>
+              )}
             </div>
             <div className={`${styles.stat} ${styles.statTemp}`}>
               <span className={styles.statKey}>Température</span>

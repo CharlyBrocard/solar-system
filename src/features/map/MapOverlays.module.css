@@ -82,7 +82,7 @@
 .tip {
   position: absolute;
   left: 50%;
-  bottom: 96px;
+  top: 92px;
   transform: translateX(-50%);
   z-index: 6;
   width: min(320px, calc(100vw - 40px));
@@ -161,7 +161,7 @@
     bottom: 120px;
   }
   .tip {
-    bottom: 84px;
+    top: calc(env(safe-area-inset-top, 0px) + 244px);
   }
 }
 

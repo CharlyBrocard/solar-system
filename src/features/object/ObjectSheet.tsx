@@ -12,6 +12,7 @@ import {
   fmtKm,
   fmtTemp,
   fmtYear,
+  isTidallyLocked,
 } from '@/data/format';
 import { useProgress } from '@/store/progress';
 import { revealHint, unlockedZones } from '@/store/selectors';
@@ -70,6 +71,8 @@ function DiscoveredSheet({ body, onBack, onGo }: SheetProps) {
   const moons = moonsOf(body.id);
   const pct = earthDiameterPct(body);
   const isEarth = body.id === 'terre';
+  const locked = isTidallyLocked(body);
+  const parentName = body.parent ? (bodyById(body.parent)?.name ?? 'sa planète') : '';
 
   const simplified = useProgress((s) => s.prefs.simplified);
   const readAloud = useProgress((s) => s.prefs.readAloud);
@@ -129,8 +132,16 @@ function DiscoveredSheet({ body, onBack, onGo }: SheetProps) {
         <div className={styles.stats}>
           <Stat k="Diamètre" v={fmtDiameter(body.facts.diameterKm)} />
           <Stat k="Distance au Soleil" v={fmtKm(body.facts.distanceSunKm)} />
-          <Stat k="Durée du jour" v={fmtDay(body.facts.dayHours)} />
-          <Stat k="Durée de l'année" v={fmtYear(body.facts.yearDays)} />
+          <Stat
+            k="Durée du jour"
+            v={fmtDay(body.facts.dayHours)}
+            note={locked ? 'toujours la même face' : undefined}
+          />
+          <Stat
+            k="Durée de l'année"
+            v={fmtYear(body.facts.yearDays)}
+            note={locked ? `un tour de ${parentName}` : undefined}
+          />
           <div className={`${styles.stat} ${styles.statTemp}`}>
             <span className={styles.statKey}>Température moyenne</span>
             <span className={styles.statVal}>{fmtTemp(body.facts.tempC)}</span>
@@ -288,13 +299,24 @@ function LockedSheet({
   );
 }
 
-function Stat({ k, v, muted }: { k: string; v: string; muted?: boolean }) {
+function Stat({
+  k,
+  v,
+  muted,
+  note,
+}: {
+  k: string;
+  v: string;
+  muted?: boolean;
+  note?: string;
+}) {
   return (
     <div className={styles.stat}>
       <span className={styles.statKey}>{k}</span>
       <span className={styles.statVal} data-muted={muted ? 'true' : undefined}>
         {v}
       </span>
+      {note && <span className={styles.statHint}>{note}</span>}
     </div>
   );
 }

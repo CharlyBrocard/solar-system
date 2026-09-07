@@ -86,6 +86,17 @@ export function describeBody(body: Body): string {
   return `${TYPE_LABEL[body.type]} · ${zone}`;
 }
 
+/**
+ * Lune en rotation synchrone : son « jour » (une rotation) dure aussi longtemps
+ * que son « année » (un tour de sa planète) → elle montre toujours la même face.
+ * Sans ce repère, les deux stats identiques ressemblent à un bug.
+ */
+export function isTidallyLocked(body: Body): boolean {
+  const { dayHours, yearDays } = body.facts;
+  if (!body.parent || !dayHours || !yearDays) return false;
+  return Math.abs(dayHours - yearDays * 24) / (yearDays * 24) < 0.12;
+}
+
 /** Comparaison de diamètre à la Terre, en %. */
 export function earthDiameterPct(body: Body): number {
   const earth = bodyById('terre');
