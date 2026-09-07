@@ -116,12 +116,12 @@ export function ringTexture(): THREE.Texture {
     for (let x = 0; x < N; x++) {
       const v = x / N;
       // opacité de fond douce (bord interne plus léger, corps dense, bord externe qui s'efface)
-      let a = 0.62 + 0.16 * Math.sin(v * 22) + 0.06 * Math.sin(v * 61);
-      a *= THREE.MathUtils.smoothstep(v, 0.0, 0.16) * (1 - THREE.MathUtils.smoothstep(v, 0.82, 1));
+      let a = 0.6 + 0.09 * Math.sin(v * 16) + 0.03 * Math.sin(v * 44);
+      a *= THREE.MathUtils.smoothstep(v, 0.0, 0.18) * (1 - THREE.MathUtils.smoothstep(v, 0.8, 1));
       // division de Cassini, adoucie
-      const cassini = 1 - 0.82 * Math.exp(-Math.pow((v - 0.63) / 0.028, 2));
+      const cassini = 1 - 0.8 * Math.exp(-Math.pow((v - 0.63) / 0.03, 2));
       a *= cassini;
-      const shade = 210 + Math.floor(20 * Math.sin(v * 24));
+      const shade = 212 + Math.floor(12 * Math.sin(v * 18));
       ctx.fillStyle = `rgba(${shade},${shade - 24},${shade - 66},${Math.max(0, a).toFixed(3)})`;
       ctx.fillRect(x, 0, 1, 8);
     }
@@ -213,13 +213,13 @@ export function sunTexture(): THREE.Texture {
       ctx.fillStyle = rg;
       ctx.fillRect(x - r, y - r, r * 2, r * 2);
     }
-    // quelques taches solaires plus sombres
-    for (let i = 0; i < 8; i++) {
+    // quelques taches solaires plus sombres, discrètes
+    for (let i = 0; i < 5; i++) {
       const x = Math.random() * N;
       const y = Math.random() * N;
-      const r = 6 + Math.random() * 12;
+      const r = 5 + Math.random() * 9;
       const rg = ctx.createRadialGradient(x, y, 0, x, y, r);
-      rg.addColorStop(0, 'rgba(180,90,30,0.35)');
+      rg.addColorStop(0, 'rgba(184,102,44,0.2)');
       rg.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = rg;
       ctx.fillRect(x - r, y - r, r * 2, r * 2);

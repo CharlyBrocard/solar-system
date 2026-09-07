@@ -134,6 +134,8 @@ function CenterBody({
         )}
       </mesh>
 
+      {body.rings && <PlanetRings radius={radius} />}
+
       {isStar && (
         <>
           <sprite scale={[radius * 5.5, radius * 5.5, 1]}>
@@ -296,8 +298,8 @@ function Pin({
 function PlanetRings({ radius }: { radius: number }) {
   const tex = useMemo(ringTexture, []);
   const geom = useMemo(() => {
-    const inner = radius * 1.45;
-    const outer = radius * 2.75;
+    const inner = radius * 1.38;
+    const outer = radius * 2.35;
     const g = new THREE.RingGeometry(inner, outer, 128, 1);
     const pos = g.attributes.position;
     const uv = g.attributes.uv;
@@ -313,9 +315,9 @@ function PlanetRings({ radius }: { radius: number }) {
     <mesh geometry={geom} rotation={[-Math.PI / 2.25, 0, 0.26]}>
       <meshBasicMaterial
         map={tex}
-        color="#efe0c2"
+        color="#e6d4b0"
         transparent
-        opacity={0.9}
+        opacity={0.82}
         side={THREE.DoubleSide}
         depthWrite={false}
       />
