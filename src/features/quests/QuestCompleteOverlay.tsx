@@ -7,15 +7,19 @@ import styles from './QuestCompleteOverlay.module.css';
 
 /**
  * Célébration montrée quand une quête vient d'être accomplie.
- * Pilotée par `pendingQuestComplete` dans le store — rendue au niveau de l'app
- * (`AppLayout`) pour passer par-dessus n'importe quel écran, comme l'overlay `3e`.
- * Pas d'artboard dédié : reprend la DA de « Moment de découverte ».
+ * Pilotée par la file `pendingQuestCompletions` du store (célébrées une à une :
+ * dismiss → quête suivante) — rendue au niveau de l'app (`AppLayout`) pour passer
+ * par-dessus n'importe quel écran, comme l'overlay `3e`. Pas d'artboard dédié :
+ * reprend la DA de « Moment de découverte ».
  */
 export function QuestCompleteOverlay() {
-  const pendingId = useProgress((s) => s.pendingQuestComplete);
+  const pendingId = useProgress((s) => s.pendingQuestCompletions[0] ?? null);
   const pendingDiscovery = useProgress((s) => s.pendingDiscovery);
   const dismiss = useProgress((s) => s.dismissQuestComplete);
-  const completedCount = useProgress((s) => s.completedQuests.length);
+  // rang de CETTE quête (les suivantes de la file ne comptent pas encore)
+  const completedCount = useProgress(
+    (s) => s.completedQuests.length - Math.max(0, s.pendingQuestCompletions.length - 1),
+  );
   const navigate = useNavigate();
 
   // Une découverte notable peut à la fois révéler un objet et clore une quête :

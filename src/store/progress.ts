@@ -30,8 +30,8 @@ export interface ProgressState {
   pendingDiscovery: string | null;
   /** Badges décernés pendant cette découverte, pour l'overlay. */
   pendingBadges: string[];
-  /** Quête qui vient d'être accomplie : déclenche la célébration. */
-  pendingQuestComplete: string | null;
+  /** File des quêtes qui viennent d'être accomplies : célébrées une à une. */
+  pendingQuestCompletions: string[];
 
   // --- actions ---
   startGame: (name: string, avatarId: number) => void;
@@ -79,7 +79,7 @@ const initialState = {
   prefs: { readAloud: false, simplified: false, ambientSound: false } as Prefs,
   pendingDiscovery: null as string | null,
   pendingBadges: [] as string[],
-  pendingQuestComplete: null as string | null,
+  pendingQuestCompletions: [] as string[],
 };
 
 export const useProgress = create<ProgressState>()(
@@ -134,11 +134,12 @@ export const useProgress = create<ProgressState>()(
             activeQuestId: s.activeQuestId === id ? null : s.activeQuestId,
             badges,
             points: s.points + POINTS_PER_QUEST,
-            pendingQuestComplete: id,
+            pendingQuestCompletions: [...s.pendingQuestCompletions, id],
           };
         }),
 
-      dismissQuestComplete: () => set({ pendingQuestComplete: null }),
+      dismissQuestComplete: () =>
+        set((s) => ({ pendingQuestCompletions: s.pendingQuestCompletions.slice(1) })),
 
       passQuiz: (id) =>
         set((s) => (s.quizPassed.includes(id) ? s : { quizPassed: [...s.quizPassed, id] })),
@@ -163,7 +164,7 @@ export const useProgress = create<ProgressState>()(
       partialize: ({
         pendingDiscovery: _pd,
         pendingBadges: _pb,
-        pendingQuestComplete: _pq,
+        pendingQuestCompletions: _pq,
         realScaleMode: _rs,
         ...rest
       }) => rest,
