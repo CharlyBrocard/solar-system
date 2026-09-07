@@ -30,7 +30,7 @@ export function bandedTexture(body: Body): THREE.Texture {
     ctx.fillStyle = mid;
     ctx.fillRect(0, 0, W, H);
 
-    const tones = [light, mid, dark, mid, light, dark, mid, light, mid, dark];
+    const tones = [mid, dark, mid, light, dark, mid, light, mid, dark, mid];
     let y = 0;
     let i = 0;
     while (y < H) {
@@ -66,6 +66,15 @@ export function bandedTexture(body: Body): THREE.Texture {
       ctx.fill();
       ctx.restore();
     }
+
+    // assombrit les pôles → évite la calotte brillante au sommet de la sphère
+    const pole = ctx.createLinearGradient(0, 0, 0, H);
+    pole.addColorStop(0, 'rgba(0,0,0,0.34)');
+    pole.addColorStop(0.16, 'rgba(0,0,0,0)');
+    pole.addColorStop(0.84, 'rgba(0,0,0,0)');
+    pole.addColorStop(1, 'rgba(0,0,0,0.34)');
+    ctx.fillStyle = pole;
+    ctx.fillRect(0, 0, W, H);
 
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;

@@ -600,7 +600,7 @@ function CameraRig({
       d = (inner * Math.sin(elev)) / (0.7 * Math.tan(vFov / 2));
     } else {
       // mode décor (écran d'entrée) : cadrage fixe et généreux, on ignore `zoom`
-      const fill = !interactive ? 0.58 : 0.74;
+      const fill = !interactive ? 0.58 : 0.77;
       d = sceneRadius / (fill * Math.tan(hFov / 2));
     }
     fitDist.current = d;
