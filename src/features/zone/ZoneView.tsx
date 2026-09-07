@@ -83,17 +83,28 @@ export function ZoneView() {
 
   const rings = useMemo(() => {
     if (!config) return [];
+    // Ceinture : deux anneaux tirets très discrets pour marquer les bords de la
+    // bande — un anneau par caillou (6+) faisait un fouillis de pointillés.
+    if (config.isBelt) {
+      const rs = config.members.map((m) => m.orbitRadius);
+      const lo = Math.min(...rs);
+      const hi = Math.max(...rs);
+      return [lo - 10, hi + 10].map((radius) => ({
+        radius,
+        dashed: true,
+        width: 2,
+        color: ringColor(0.1),
+      }));
+    }
     const radii = [
       ...new Set(config.members.map((m) => Math.round(m.orbitRadius / 8) * 8)),
     ].sort((a, b) => a - b);
     return radii.map((r, i) => ({
       radius: r,
-      dashed: config.isBelt,
-      width: !config.isBelt && i === Math.floor(radii.length / 2) ? 3 : 2,
+      dashed: false,
+      width: i === Math.floor(radii.length / 2) ? 3 : 2,
       color:
-        !config.isBelt && i === Math.floor(radii.length / 2)
-          ? 'rgba(232,176,75,.4)'
-          : ringColor(config.isBelt ? 0.15 : 0.16),
+        i === Math.floor(radii.length / 2) ? 'rgba(232,176,75,.4)' : ringColor(0.16),
     }));
   }, [config]);
 

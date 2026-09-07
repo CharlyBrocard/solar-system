@@ -145,6 +145,10 @@ function FollowedCard({
 }) {
   const { quest, objectives, doneCount, total } = status;
   const badge = badgeById(quest.rewardBadgeId);
+  // Objectif unique et chiffré (« 2/4 lunes ») : on affiche SA progression, pas
+  // « 0/1 objectifs » — qui contredisait le « 2/4 » de la ligne juste en dessous.
+  const counted =
+    objectives.length === 1 && objectives[0].total != null ? objectives[0] : null;
 
   return (
     <div className={styles.followed}>
@@ -154,7 +158,9 @@ function FollowedCard({
           Quête suivie
         </span>
         <span className={styles.tagMeta}>
-          {doneCount}/{total} objectifs
+          {counted
+            ? `${counted.current}/${counted.total}`
+            : `${doneCount}/${total} objectifs`}
         </span>
       </div>
 
