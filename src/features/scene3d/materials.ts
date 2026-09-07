@@ -149,6 +149,65 @@ export function terrainTexture(body: Body): THREE.Texture {
   });
 }
 
+/**
+ * Normal map dérivée de la luminance d'une texture canvas : le relief déjà
+ * présent (continents, bandes) accroche alors la lumière au lieu d'être plat.
+ * Zéro asset — Sobel sur le canvas source.
+ */
+export function normalFromTexture(
+  source: THREE.Texture,
+  key: string,
+  strength = 1,
+): THREE.Texture {
+  return memo(`normal-${key}`, () => {
+    const src = source.image as HTMLCanvasElement;
+    const W = src.width;
+    const H = src.height;
+    const c = document.createElement('canvas');
+    c.width = W;
+    c.height = H;
+    const ctx = c.getContext('2d')!;
+    // léger flou : le grain fin ne doit pas faire scintiller la lumière
+    ctx.filter = 'blur(1px)';
+    ctx.drawImage(src, 0, 0);
+    ctx.filter = 'none';
+    const px = ctx.getImageData(0, 0, W, H).data;
+    const lum = (x: number, y: number) => {
+      const xi = ((x % W) + W) % W;
+      const yi = Math.max(0, Math.min(H - 1, y));
+      const i = (yi * W + xi) * 4;
+      return (px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114) / 255;
+    };
+    const out = ctx.createImageData(W, H);
+    const s = strength * 2.2;
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const dx = (lum(x + 1, y) - lum(x - 1, y)) * s;
+        const dy = (lum(x, y + 1) - lum(x, y - 1)) * s;
+        const inv = 1 / Math.hypot(dx, dy, 1);
+        const i = (y * W + x) * 4;
+        out.data[i] = (-dx * inv * 0.5 + 0.5) * 255;
+        out.data[i + 1] = (-dy * inv * 0.5 + 0.5) * 255;
+        out.data[i + 2] = (inv * 0.5 + 0.5) * 255;
+        out.data[i + 3] = 255;
+      }
+    }
+    ctx.putImageData(out, 0, 0);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.NoColorSpace;
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.anisotropy = 4;
+    return tex;
+  });
+}
+
+/** Relief procédural (normal map) d'une planète / lune, dérivé de sa texture. */
+export function bodyNormalMap(body: Body): THREE.Texture {
+  const banded = !!body.banded;
+  const src = banded ? bandedTexture(body) : terrainTexture(body);
+  return normalFromTexture(src, `${banded ? 'band' : 'terrain'}-${body.id}`, banded ? 0.6 : 1);
+}
+
 /** Anneaux type Saturne : disque diffus + fine structure + division de Cassini. */
 export function ringTexture(): THREE.Texture {
   return memo('saturn-rings', () => {

@@ -17,11 +17,13 @@ import type { OrbitalSceneProps } from '@/features/scene/types';
 import {
   backdropTexture,
   bandedTexture,
+  bodyNormalMap,
   radialSprite,
   ringTexture,
   sunTexture,
   terrainTexture,
 } from './materials';
+import { AtmosphereRim } from './AtmosphereRim';
 import {
   alphaOf,
   ATMOSPHERE,
@@ -58,12 +60,14 @@ function CenterBody({
   radius,
   reduced,
   segMax,
+  normalMaps,
   onClick,
 }: {
   body: Body;
   radius: number;
   reduced: boolean;
   segMax: number;
+  normalMaps: boolean;
   onClick?: () => void;
 }) {
   const mesh = useRef<THREE.Mesh>(null);
@@ -91,6 +95,14 @@ function CenterBody({
     () =>
       isStar ? sunTexture() : body.banded ? bandedTexture(body) : terrainTexture(body),
     [isStar, body],
+  );
+  const normalMap = useMemo(
+    () => (!isStar && normalMaps ? bodyNormalMap(body) : null),
+    [isStar, normalMaps, body],
+  );
+  const normalScale = useMemo(
+    () => new THREE.Vector2(body.banded ? 0.3 : 0.6, body.banded ? 0.3 : 0.6),
+    [body.banded],
   );
 
   useFrame((_, dt) => {
@@ -121,6 +133,8 @@ function CenterBody({
         ) : (
           <meshStandardMaterial
             map={map}
+            normalMap={normalMap ?? undefined}
+            normalScale={normalScale}
             color={body.banded ? '#ffffff' : '#f4f1ea'}
             roughness={0.85}
             metalness={0}
@@ -166,6 +180,7 @@ function Pin({
   hovered,
   reduced,
   segMax,
+  normalMaps,
   onHover,
   onSelect,
 }: {
@@ -175,6 +190,7 @@ function Pin({
   hovered: boolean;
   reduced: boolean;
   segMax: number;
+  normalMaps: boolean;
   onHover: (id: string | null) => void;
   onSelect: (b: Body) => void;
 }) {
@@ -189,6 +205,14 @@ function Pin({
   const map = useMemo(
     () => (revealed ? (banded ? bandedTexture(body) : terrainTexture(body)) : null),
     [revealed, banded, body],
+  );
+  const normalMap = useMemo(
+    () => (revealed && normalMaps ? bodyNormalMap(body) : null),
+    [revealed, normalMaps, body],
+  );
+  const normalScale = useMemo(
+    () => new THREE.Vector2(banded ? 0.35 : 0.7, banded ? 0.35 : 0.7),
+    [banded],
   );
   const spin = useMemo(() => 0.1 + (body.size % 7) * 0.035, [body.size]);
   const tmp = useMemo(() => new THREE.Vector3(), []);
@@ -232,6 +256,8 @@ function Pin({
         {revealed ? (
           <meshStandardMaterial
             map={map ?? undefined}
+            normalMap={normalMap ?? undefined}
+            normalScale={normalScale}
             color={banded ? '#ffffff' : '#f4f1ea'}
             roughness={0.85}
             metalness={0}
@@ -276,28 +302,7 @@ function Pin({
       {body.rings && revealed && <PlanetRings radius={radius} />}
 
       {revealed && atmosphere && (
-        <>
-          <mesh scale={1.055}>
-            <sphereGeometry args={[radius, 28, 28]} />
-            <meshBasicMaterial
-              color={atmosphere}
-              transparent
-              opacity={0.16}
-              side={THREE.BackSide}
-              depthWrite={false}
-            />
-          </mesh>
-          <mesh scale={1.14}>
-            <sphereGeometry args={[radius, 24, 24]} />
-            <meshBasicMaterial
-              color={atmosphere}
-              transparent
-              opacity={0.05}
-              side={THREE.BackSide}
-              depthWrite={false}
-            />
-          </mesh>
-        </>
+        <AtmosphereRim color={atmosphere} radius={radius} scale={1.03} intensity={0.5} />
       )}
 
       {hovered && (
@@ -918,6 +923,7 @@ function Scene({
           radius={centerRadius}
           reduced={reduced}
           segMax={quality.sphereSegments}
+          normalMaps={quality.normalMaps}
           onClick={onCenterClick}
         />
       )}
@@ -931,6 +937,7 @@ function Scene({
           hovered={hoveredId === p.body.id}
           reduced={reduced}
           segMax={quality.sphereSegments}
+          normalMaps={quality.normalMaps}
           onHover={onHover}
           onSelect={onSelect}
         />

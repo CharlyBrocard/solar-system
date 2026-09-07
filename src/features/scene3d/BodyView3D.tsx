@@ -5,9 +5,17 @@ import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { KernelSize } from 'postprocessing';
 import * as THREE from 'three';
 import type { Body } from '@/data/types';
-import { bandedTexture, radialSprite, ringTexture, sunTexture, terrainTexture } from './materials';
+import {
+  bandedTexture,
+  bodyNormalMap,
+  radialSprite,
+  ringTexture,
+  sunTexture,
+  terrainTexture,
+} from './materials';
 import { ATMOSPHERE, prefersReducedMotion } from './scene3d';
 import { useQuality } from './quality';
+import { AtmosphereRim } from './AtmosphereRim';
 
 /**
  * Rendu 3D d'un seul astre — même matière/éclairage que la scène orbitale, mais
@@ -70,11 +78,24 @@ function Sphere({
   spin,
   moons,
   seg,
-}: Pick<BodyView3DProps, 'body' | 'silhouette' | 'spin' | 'moons'> & { seg: number }) {
+  normalMaps,
+}: Pick<BodyView3DProps, 'body' | 'silhouette' | 'spin' | 'moons'> & {
+  seg: number;
+  normalMaps: boolean;
+}) {
   const mesh = useRef<THREE.Mesh>(null);
   const isStar = body.type === 'star';
   const reduced = useMemo(prefersReducedMotion, []);
   const spinning = (spin ?? !reduced) && !silhouette;
+
+  const normalMap = useMemo(
+    () => (!isStar && !silhouette && normalMaps ? bodyNormalMap(body) : null),
+    [isStar, silhouette, normalMaps, body],
+  );
+  const normalScale = useMemo(
+    () => new THREE.Vector2(body.banded ? 0.3 : 0.6, body.banded ? 0.3 : 0.6),
+    [body.banded],
+  );
 
   const map = useMemo(() => {
     if (silhouette) return null;
@@ -144,6 +165,8 @@ function Sphere({
         ) : (
           <meshStandardMaterial
             map={map ?? undefined}
+            normalMap={normalMap ?? undefined}
+            normalScale={normalScale}
             color={body.banded ? '#ffffff' : '#f4f1ea'}
             roughness={0.85}
             metalness={0}
@@ -167,19 +190,7 @@ function Sphere({
           </sprite>
         ))}
 
-      {atmosphere && (
-        <mesh scale={1.03}>
-          <sphereGeometry args={[1, Math.min(seg, 48), Math.min(seg, 48)]} />
-          <meshBasicMaterial
-            color={atmosphere}
-            transparent
-            opacity={0.28}
-            side={THREE.BackSide}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-          />
-        </mesh>
-      )}
+      {atmosphere && <AtmosphereRim color={atmosphere} scale={1.025} intensity={0.75} />}
 
       {body.rings && <Rings />}
       {moons && moons.length > 0 && <Moons moons={moons} turning={spinning} />}
@@ -305,7 +316,14 @@ export function BodyView3D({
               <directionalLight position={[3.4, -1.2, 1.8]} intensity={0.55} color="#9fb4e0" />
             </>
           )}
-          <Sphere body={body} silhouette={silhouette} spin={spin} moons={moons} seg={seg} />
+          <Sphere
+            body={body}
+            silhouette={silhouette}
+            spin={spin}
+            moons={moons}
+            seg={seg}
+            normalMaps={q.normalMaps}
+          />
           {withBloom && (
             <EffectComposer multisampling={0}>
               <Bloom
