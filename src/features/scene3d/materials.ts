@@ -268,7 +268,13 @@ export function radialSprite(key: string, stops: [number, string][]): THREE.Text
   });
 }
 
-/** Dégradé vertical du fond spatial + deux nébuleuses très diffuses. */
+/**
+ * Fond spatial (dôme équirectangulaire) : dégradé vertical, nébuleuses colorées
+ * diffuses, une Voie lactée diagonale (bande lumineuse + voiles de poussière
+ * sombre) et une fine poussière d'étoiles. Tout est peint une seule fois sur un
+ * canvas puis mémoïsé — coût nul à l'exécution. Les motifs horizontaux sont
+ * répétés à ±W pour que le raccord de la sphère reste invisible.
+ */
 export function backdropTexture(): THREE.Texture {
   return memo('backdrop', () => {
     const W = 1024;
@@ -277,21 +283,94 @@ export function backdropTexture(): THREE.Texture {
     c.width = W;
     c.height = H;
     const ctx = c.getContext('2d')!;
+
+    // graine déterministe : le fond est toujours le même
+    let s = 0x2545f4c1;
+    const rnd = () => {
+      s ^= s << 13;
+      s ^= s >>> 17;
+      s ^= s << 5;
+      return ((s >>> 0) % 100000) / 100000;
+    };
+
+    // 1 — dégradé de base, plus profond en haut et en bas
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#0c0a1e');
-    g.addColorStop(0.5, '#171334');
-    g.addColorStop(1, '#0a0817');
+    g.addColorStop(0, '#0a0819');
+    g.addColorStop(0.34, '#141031');
+    g.addColorStop(0.62, '#1a1436');
+    g.addColorStop(1, '#080611');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
-    const blob = (x: number, y: number, r: number, col: string) => {
-      const rg = ctx.createRadialGradient(x, y, 0, x, y, r);
-      rg.addColorStop(0, col);
-      rg.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = rg;
-      ctx.fillRect(0, 0, W, H);
+
+    // tache diffuse, répétée à gauche/droite pour un raccord invisible
+    const blob = (x: number, y: number, r: number, col: string, op: GlobalCompositeOperation = 'source-over') => {
+      ctx.globalCompositeOperation = op;
+      for (const dx of [-W, 0, W]) {
+        const rg = ctx.createRadialGradient(x + dx, y, 0, x + dx, y, r);
+        rg.addColorStop(0, col);
+        rg.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = rg;
+        ctx.fillRect(0, 0, W, H);
+      }
+      ctx.globalCompositeOperation = 'source-over';
     };
-    blob(W * 0.24, H * 0.32, W * 0.28, 'rgba(120,60,140,0.16)');
-    blob(W * 0.78, H * 0.6, W * 0.3, 'rgba(60,80,150,0.14)');
+
+    // 2 — grandes nébuleuses colorées (additif léger : elles « brillent »)
+    blob(W * 0.22, H * 0.3, W * 0.34, 'rgba(126,58,150,0.13)', 'lighter');
+    blob(W * 0.8, H * 0.64, W * 0.36, 'rgba(52,86,164,0.12)', 'lighter');
+    blob(W * 0.54, H * 0.2, W * 0.24, 'rgba(58,140,150,0.08)', 'lighter');
+    blob(W * 0.05, H * 0.82, W * 0.28, 'rgba(150,74,120,0.09)', 'lighter');
+
+    // 3 — Voie lactée : bande diagonale douce le long d'une sinusoïde
+    const bandY = (x: number) => H * 0.52 + Math.sin((x / W) * Math.PI * 2 + 0.6) * H * 0.16;
+    for (let i = 0; i < 130; i++) {
+      const x = rnd() * W;
+      const y = bandY(x) + (rnd() - 0.5) * H * 0.34;
+      const d = Math.abs(y - bandY(x)) / (H * 0.22);
+      const a = Math.max(0, 0.05 * (1 - d)) * (0.4 + rnd() * 0.6);
+      blob(x, y, W * (0.04 + rnd() * 0.09), `rgba(198,206,240,${a.toFixed(3)})`, 'lighter');
+    }
+    // voiles de poussière sombre qui découpent la bande
+    for (let i = 0; i < 34; i++) {
+      const x = rnd() * W;
+      const y = bandY(x) + (rnd() - 0.5) * H * 0.24;
+      blob(x, y, W * (0.03 + rnd() * 0.07), `rgba(6,5,14,${(0.1 + rnd() * 0.16).toFixed(3)})`);
+    }
+
+    // 4 — marbrure : casse la platitude du dégradé
+    for (let i = 0; i < 26; i++) {
+      const dark = rnd() > 0.5;
+      blob(
+        rnd() * W,
+        rnd() * H,
+        W * (0.12 + rnd() * 0.16),
+        dark ? `rgba(5,4,12,${(0.05 + rnd() * 0.05).toFixed(3)})` : `rgba(120,110,170,${(0.03 + rnd() * 0.04).toFixed(3)})`,
+        dark ? 'source-over' : 'lighter',
+      );
+    }
+
+    ctx.filter = 'blur(2px)';
+    ctx.drawImage(c, 0, 0);
+    ctx.filter = 'none';
+
+    // 5 — poussière d'étoiles fine, plus dense le long de la bande (net, après flou)
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 620; i++) {
+      const nearBand = rnd() < 0.62;
+      const x = rnd() * W;
+      const y = nearBand ? bandY(x) + (rnd() - 0.5) * H * 0.4 : rnd() * H;
+      const r = rnd() < 0.9 ? 0.6 : 1.2;
+      const a = 0.25 + rnd() * 0.5;
+      const warm = rnd() < 0.22;
+      ctx.fillStyle = warm
+        ? `rgba(255,224,196,${a.toFixed(3)})`
+        : `rgba(220,228,255,${a.toFixed(3)})`;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+
     const t = new THREE.CanvasTexture(c);
     t.colorSpace = THREE.SRGBColorSpace;
     return t;

@@ -911,7 +911,7 @@ function Scene({
         depth={sceneRadius}
         count={quality.starCount}
         factor={4}
-        saturation={0}
+        saturation={0.18}
         fade
         speed={reduced ? 0 : 0.32}
       />
