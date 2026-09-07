@@ -112,12 +112,23 @@
   width: 100%;
 }
 
+.hangar {
+  flex: none;
+}
+
 .shipsLabel {
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #a49bbd;
+}
+
+.shipName {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
 }
 
 .shipRow {

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Avatar } from '@/components/Avatar';
+import { ShipHero } from '@/components/ShipHero';
 import { BodySphere } from '@/components/BodySphere';
 import { BottomNav } from '@/components/BottomNav';
 import BADGES from '@/data/badges';
@@ -61,7 +61,7 @@ export function Profile() {
         </Link>
 
         <div className={styles.head}>
-          <Avatar id={avatarId} size={96} />
+          <ShipHero id={avatarId} size={96} tint="#191436" />
           <div className={styles.identity}>
             <span className={styles.rank}>
               Explorateur · niveau {level}

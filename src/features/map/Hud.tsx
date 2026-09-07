@@ -1,4 +1,4 @@
-import { Avatar } from '@/components/Avatar';
+import { Ship } from '@/components/Ship';
 import styles from './Hud.module.css';
 
 interface HudProps {
@@ -45,7 +45,7 @@ export function Hud({
         data-nodrag
         aria-label="Ouvrir le profil"
       >
-        <Avatar id={avatarId} size={40} />
+        <Ship id={avatarId} size={44} style={{ borderRadius: 13 }} />
       </button>
 
       <div className={`${styles.panel} ${styles.breadcrumb}`} data-nodrag>

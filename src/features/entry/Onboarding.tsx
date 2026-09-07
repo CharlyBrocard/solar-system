@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Avatar, AVATAR_GRADIENTS } from '@/components/Avatar';
+import { Ship, SHIPS } from '@/components/Ship';
+import { ShipHero } from '@/components/ShipHero';
 import { useProgress } from '@/store/progress';
 import styles from './Onboarding.module.css';
 
@@ -59,18 +60,19 @@ export function Onboarding() {
 
         <div className={styles.ships}>
           <span className={styles.shipsLabel}>Choisis ton vaisseau</span>
+          <ShipHero id={avatarId} size={150} className={styles.hangar} tint="#181334" />
           <div className={styles.shipRow}>
-            {AVATAR_GRADIENTS.map((_, i) => (
+            {SHIPS.map((ship, i) => (
               <button
-                key={i}
+                key={ship.name}
                 type="button"
                 className={styles.ship}
                 data-selected={i === avatarId ? 'true' : undefined}
                 onClick={() => setAvatarId(i)}
-                aria-label={`Vaisseau ${i + 1}`}
+                aria-label={ship.name}
                 aria-pressed={i === avatarId}
               >
-                <Avatar
+                <Ship
                   id={i}
                   size={96}
                   style={{ width: '100%', height: '100%', borderRadius: 'inherit' }}
@@ -78,6 +80,7 @@ export function Onboarding() {
               </button>
             ))}
           </div>
+          <span className={styles.shipName}>{SHIPS[avatarId]?.name ?? SHIPS[0].name}</span>
         </div>
 
         <div className={styles.actions}>
