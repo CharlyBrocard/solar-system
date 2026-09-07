@@ -34,31 +34,12 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // précache tout le bundle (three.js compris) : l'app tient hors-ligne
-        // dès la 1re visite. Le chunk three est gros (~240 Ko gz) mais fait
-        // désormais partie du cœur de l'expérience.
+        // précache tout le bundle (three.js + polices auto-hébergées compris) :
+        // l'app tient hors-ligne dès la 1re visite, polices incluses.
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
-        runtimeCaching: [
-          {
-            // feuille de style Google Fonts : on la rafraîchit en tâche de fond
-            urlPattern: ({ url }) => url.origin === 'https://fonts.googleapis.com',
-            handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'google-fonts-stylesheets' },
-          },
-          {
-            // fichiers de police : figés une fois récupérés (1 an)
-            urlPattern: ({ url }) => url.origin === 'https://fonts.gstatic.com',
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-webfonts',
-              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-        ],
       },
     }),
   ],
