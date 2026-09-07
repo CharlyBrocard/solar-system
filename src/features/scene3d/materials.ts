@@ -75,32 +75,67 @@ export function bandedTexture(body: Body): THREE.Texture {
   });
 }
 
-/** Léger dégradé pôle → équateur pour les telluriques / lunes. */
+/** Surface stylisée des telluriques / lunes : dégradé latitudinal + reliefs doux. */
 export function terrainTexture(body: Body): THREE.Texture {
   return memo(`terrain-${body.id}`, () => {
+    const W = 256;
+    const H = 128;
     const c = document.createElement('canvas');
-    c.width = 4;
-    c.height = 128;
+    c.width = W;
+    c.height = H;
     const ctx = c.getContext('2d')!;
     const [light, mid, dark] = body.gradient;
-    const g = ctx.createLinearGradient(0, 0, 0, 128);
-    g.addColorStop(0, light);
-    g.addColorStop(0.42, mid);
-    g.addColorStop(0.66, dark);
-    g.addColorStop(1, mid);
+
+    // fond : latitude (pôles plus sombres, équateur clair)
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, dark);
+    g.addColorStop(0.16, mid);
+    g.addColorStop(0.5, light);
+    g.addColorStop(0.84, mid);
+    g.addColorStop(1, dark);
     ctx.fillStyle = g;
-    ctx.fillRect(0, 0, 4, 128);
-    // quelques taches douces
-    ctx.globalAlpha = 0.12;
-    for (let i = 0; i < 10; i++) {
-      ctx.fillStyle = Math.random() > 0.5 ? light : dark;
-      ctx.beginPath();
-      ctx.arc(Math.random() * 4, Math.random() * 128, 1 + Math.random() * 2, 0, Math.PI * 2);
-      ctx.fill();
+    ctx.fillRect(0, 0, W, H);
+
+    // PRNG déterministe par id → mêmes continents à chaque rendu
+    let seed = 0;
+    for (const ch of body.id) seed = (seed * 31 + ch.charCodeAt(0)) | 0;
+    const rnd = () => {
+      seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+
+    // reliefs / taches douces, dupliqués au bord pour masquer la couture
+    for (let i = 0; i < 24; i++) {
+      const x = rnd() * W;
+      const y = 10 + rnd() * (H - 20);
+      const rad = 6 + rnd() * 24;
+      ctx.globalAlpha = 0.09 + rnd() * 0.15;
+      ctx.fillStyle = rnd() < 0.5 ? dark : light;
+      for (const dx of [-W, 0, W]) {
+        ctx.beginPath();
+        ctx.ellipse(x + dx, y, rad, rad * (0.5 + rnd() * 0.5), rnd() * Math.PI, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
     ctx.globalAlpha = 1;
+    ctx.filter = 'blur(2px)';
+    ctx.drawImage(c, 0, 0);
+    ctx.filter = 'none';
+
+    // grain fin
+    ctx.globalAlpha = 0.035;
+    for (let i = 0; i < 700; i++) {
+      ctx.fillStyle = rnd() > 0.5 ? '#ffffff' : '#000000';
+      ctx.fillRect(rnd() * W, rnd() * H, 1, 1);
+    }
+    ctx.globalAlpha = 1;
+
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.anisotropy = 4;
     return tex;
   });
 }

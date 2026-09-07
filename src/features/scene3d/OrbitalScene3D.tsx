@@ -371,13 +371,50 @@ function BeltDots({ dots, driftRef }: { dots: NonNullable<OrbitalSceneProps['dec
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const tmp = useMemo(() => new THREE.Vector3(), []);
 
+  // On étoffe les quelques cailloux fournis en un vrai champ d'astéroïdes :
+  // même plage de rayons + même palette, dispersion déterministe.
+  const rocks = useMemo(() => {
+    if (!dots.length) return [];
+    const rs = dots.map((d) => d.r);
+    const rMin = Math.min(...rs) - 12;
+    const rMax = Math.max(...rs) + 14;
+    const palette = dots.map((d) => new THREE.Color(d.c));
+    let seed = 0x9e3779b9;
+    const rnd = () => {
+      seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    return Array.from({ length: 150 }, () => ({
+      r: rMin + (rMax - rMin) * Math.sqrt(rnd()),
+      a: rnd() * 360,
+      y: (rnd() - 0.5) * 2.2,
+      s: Math.max(0.11, (0.5 + rnd() * rnd() * 3.4) * SIZE_SCALE * 1.4),
+      col: palette[Math.floor(rnd() * palette.length)],
+      rx: rnd() * 6,
+      ry: rnd() * 6,
+      rz: rnd() * 6,
+      spin: 0.2 + rnd() * 0.9,
+    }));
+  }, [dots]);
+
+  useEffect(() => {
+    const m = ref.current;
+    if (!m) return;
+    rocks.forEach((rock, i) => m.setColorAt(i, rock.col));
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  }, [rocks]);
+
   useFrame(() => {
     const m = ref.current;
     if (!m) return;
-    dots.forEach((d, i) => {
-      orbitPosition({ orbitRadius: d.r, orbitAngle: d.a }, driftRef.current, tmp);
-      dummy.position.copy(tmp);
-      dummy.scale.setScalar(Math.max(0.12, d.s * SIZE_SCALE));
+    const t = driftRef.current;
+    rocks.forEach((rock, i) => {
+      orbitPosition({ orbitRadius: rock.r, orbitAngle: rock.a }, t, tmp);
+      dummy.position.set(tmp.x, rock.y, tmp.z);
+      dummy.rotation.set(rock.rx + t * 0.006 * rock.spin, rock.ry + t * 0.006 * rock.spin, rock.rz);
+      dummy.scale.setScalar(rock.s);
       dummy.updateMatrix();
       m.setMatrixAt(i, dummy.matrix);
     });
@@ -385,9 +422,9 @@ function BeltDots({ dots, driftRef }: { dots: NonNullable<OrbitalSceneProps['dec
   });
 
   return (
-    <instancedMesh ref={ref} args={[undefined, undefined, dots.length]}>
-      <icosahedronGeometry args={[1, 0]} />
-      <meshStandardMaterial color="#9b8f7e" roughness={1} flatShading />
+    <instancedMesh ref={ref} args={[undefined, undefined, rocks.length]} frustumCulled={false}>
+      <dodecahedronGeometry args={[1, 0]} />
+      <meshStandardMaterial roughness={1} metalness={0} flatShading />
     </instancedMesh>
   );
 }
