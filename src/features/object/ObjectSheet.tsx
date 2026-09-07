@@ -54,7 +54,7 @@ export function ObjectSheet() {
   if (!body) return null;
 
   const goBack = () => (window.history.length > 1 ? navigate(-1) : navigate('/map'));
-  const go = (to: string) => navigate(to);
+  const go = (to: string, state?: Record<string, unknown>) => navigate(to, { state });
 
   return zoneUnlocked ? (
     <DiscoveredSheet body={body} onBack={goBack} onGo={go} />
@@ -66,7 +66,7 @@ export function ObjectSheet() {
 interface SheetProps {
   body: Body;
   onBack: () => void;
-  onGo: (to: string) => void;
+  onGo: (to: string, state?: Record<string, unknown>) => void;
 }
 
 function DiscoveredSheet({ body, onBack, onGo }: SheetProps) {
@@ -214,7 +214,7 @@ function DiscoveredSheet({ body, onBack, onGo }: SheetProps) {
           <button
             type="button"
             className={styles.btnSquare}
-            onClick={() => onGo(`/present/${body.id}`)}
+            onClick={() => onGo(`/present/${body.id}`, { fromObject: true })}
             aria-label="Mode classe (plein écran)"
             title="Mode classe"
           >

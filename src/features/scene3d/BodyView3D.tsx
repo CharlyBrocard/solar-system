@@ -53,7 +53,7 @@ function LeftBiasedCamera() {
   const { camera, size } = useThree();
   useEffect(() => {
     const cam = camera as THREE.PerspectiveCamera;
-    cam.setViewOffset(size.width, size.height, size.width * 0.2, 0, size.width, size.height);
+    cam.setViewOffset(size.width, size.height, size.width * 0.24, 0, size.width, size.height);
     cam.updateProjectionMatrix();
     return () => {
       cam.clearViewOffset();
@@ -101,7 +101,9 @@ function Sphere({
     [],
   );
 
-  const atmosphere = ATMOSPHERE[body.id];
+  // pas de halo pour les géantes rayées : elles SONT de l'atmosphère, et une
+  // coquille supplémentaire ne fait qu'un liseré sombre au limbe.
+  const atmosphere = body.banded ? undefined : ATMOSPHERE[body.id];
 
   useFrame((_, dt) => {
     if (mesh.current && spinning) mesh.current.rotation.y += dt * 0.16;
@@ -164,13 +166,14 @@ function Sphere({
         ))}
 
       {atmosphere && (
-        <mesh scale={1.025}>
+        <mesh scale={1.03}>
           <sphereGeometry args={[1, 48, 48]} />
           <meshBasicMaterial
             color={atmosphere}
             transparent
-            opacity={0.1}
+            opacity={0.28}
             side={THREE.BackSide}
+            blending={THREE.AdditiveBlending}
             depthWrite={false}
           />
         </mesh>

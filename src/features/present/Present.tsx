@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useMemo } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { BodyHero } from '@/components/BodyHero';
-import { bodyById, codexOrder } from '@/data/bodies';
+import { bodyById, codexOrder, moonsOf } from '@/data/bodies';
 import type { BodyType } from '@/data/types';
 import {
   describeBody,
@@ -28,7 +28,19 @@ const TYPE_COLOR: Record<BodyType, string> = {
 export function Present() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const discovered = useProgress((s) => s.discovered);
+
+  // vrai si on est entré en mode classe depuis une fiche `/object` (bouton carré).
+  // Le flag est propagé d'un astre à l'autre par les flèches, pour que « Quitter »
+  // sache s'il peut simplement revenir en arrière (`navigate(-1)`).
+  const fromObject = (location.state as { fromObject?: boolean } | null)?.fromObject ?? false;
+
+  /** Quitter le mode classe : retour propre à la fiche d'origine. */
+  const exitToSheet = () => {
+    if (fromObject) navigate(-1);
+    else navigate(`/object/${id}`, { replace: true });
+  };
 
   const order = useMemo(codexOrder, []);
   const seen = useMemo(
@@ -36,19 +48,18 @@ export function Present() {
     [order, discovered],
   );
 
-  // La sphère est dessinée à une taille fixe en px ; on l'adapte au viewport
-  // pour qu'elle ne déborde pas sur mobile (artboard `4e` : figure ~ moitié de l'écran).
-  const [sphereSize, setSphereSize] = useState(() =>
-    typeof window === 'undefined' ? 340 : Math.min(340, Math.round(window.innerWidth * 0.62)),
-  );
-  useEffect(() => {
-    const onResize = () =>
-      setSphereSize(Math.min(340, Math.round(window.innerWidth * 0.62)));
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
   const body = bodyById(id);
+  const heroMoons = useMemo(
+    () =>
+      moonsOf(id ?? '')
+        .slice(0, 4)
+        .map((m) => ({
+          id: m.id,
+          color: m.gradient[1],
+          size: Math.max(0.045, Math.min(0.11, m.size / 260)),
+        })),
+    [id],
+  );
   const globalRank = order.findIndex((b) => b.id === id) + 1;
   const seenIndex = seen.findIndex((b) => b.id === id);
 
@@ -62,17 +73,21 @@ export function Present() {
     }
   }, [body, id, discovered, navigate]);
 
+  // navigation d'un astre à l'autre : on REMPLACE l'entrée d'historique (+ on
+  // conserve le flag `fromObject`) → le mode classe reste une seule entrée.
+  const goTo = (idx: number) =>
+    navigate(`/present/${seen[idx].id}`, { replace: true, state: { fromObject } });
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' && seenIndex < seen.length - 1)
-        navigate(`/present/${seen[seenIndex + 1].id}`);
-      if (e.key === 'ArrowLeft' && seenIndex > 0)
-        navigate(`/present/${seen[seenIndex - 1].id}`);
-      if (e.key === 'Escape') navigate(`/object/${id}`);
+      if (e.key === 'ArrowRight' && seenIndex < seen.length - 1) goTo(seenIndex + 1);
+      if (e.key === 'ArrowLeft' && seenIndex > 0) goTo(seenIndex - 1);
+      if (e.key === 'Escape') exitToSheet();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [seen, seenIndex, id, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seen, seenIndex, id, navigate, fromObject]);
 
   if (!body || seenIndex === -1) return null;
 
@@ -81,22 +96,23 @@ export function Present() {
 
   return (
     <div className={styles.screen}>
+      <BodyHero
+        className={styles.figure}
+        body={body}
+        size={0}
+        bleed
+        tint={body.type === 'star' ? '#241a3d' : '#1d1638'}
+        moons={heroMoons.length ? heroMoons : undefined}
+      />
       <div className={styles.neb} />
       <div className={styles.stars} />
+      <div className={styles.veil} />
 
-      <button
-        type="button"
-        className={styles.quit}
-        onClick={() => navigate(`/object/${body.id}`)}
-      >
+      <button type="button" className={styles.quit} onClick={exitToSheet}>
         Quitter le mode classe
       </button>
 
       <div className={styles.row}>
-        <div className={styles.figure} style={{ width: sphereSize, height: sphereSize }}>
-          <BodyHero body={body} size={sphereSize} tint="#302247" />
-        </div>
-
         <div className={styles.info}>
           <div className={styles.typeRow}>
             <span className={styles.typeDot} style={{ background: TYPE_COLOR[body.type] }} />
@@ -135,7 +151,7 @@ export function Present() {
           type="button"
           className={styles.navBtn}
           disabled={seenIndex === 0}
-          onClick={() => navigate(`/present/${seen[seenIndex - 1].id}`)}
+          onClick={() => goTo(seenIndex - 1)}
           aria-label="Objet précédent"
         >
           ‹
@@ -144,7 +160,7 @@ export function Present() {
           type="button"
           className={styles.navBtn}
           disabled={seenIndex === seen.length - 1}
-          onClick={() => navigate(`/present/${seen[seenIndex + 1].id}`)}
+          onClick={() => goTo(seenIndex + 1)}
           aria-label="Objet suivant"
         >
           ›
