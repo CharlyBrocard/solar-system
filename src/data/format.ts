@@ -80,6 +80,8 @@ export function describeBody(body: Body): string {
   const ord = planetOrdinal(body.id);
   if (ord) return `${ord}ᵉ planète · ${zone}`;
   if (DWARF_PLANETS.has(body.id)) return `Planète naine · ${zone}`;
+  if (body.id === 'sedna') return `Planète naine candidate · ${zone}`;
+  if (body.id === 'arrokoth') return `Objet de Kuiper · ${zone}`;
   if (body.zone === 'ceinture') return `Astéroïde · ${zone}`;
   return `${TYPE_LABEL[body.type]} · ${zone}`;
 }
