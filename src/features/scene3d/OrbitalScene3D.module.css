@@ -24,12 +24,6 @@
   inset: 0;
   z-index: 3;
   pointer-events: none;
-  opacity: 0;
-}
-
-.diveVeil[data-on='true'] {
-  opacity: 0.92;
-  transition: opacity 480ms ease-out 30ms;
 }
 
 /* label de survol (drei <Html>) */

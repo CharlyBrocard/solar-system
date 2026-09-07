@@ -105,23 +105,29 @@ export function terrainTexture(body: Body): THREE.Texture {
   });
 }
 
-/** Anneaux type Saturne : bandes concentriques + division de Cassini. */
+/** Anneaux type Saturne : disque diffus + fine structure + division de Cassini. */
 export function ringTexture(): THREE.Texture {
   return memo('saturn-rings', () => {
-    const N = 256;
+    const N = 512;
     const c = document.createElement('canvas');
     c.width = N;
     c.height = 8;
     const ctx = c.getContext('2d')!;
     for (let x = 0; x < N; x++) {
       const v = x / N;
-      let a = 0.5 + 0.35 * Math.sin(v * 42);
-      if (v > 0.58 && v < 0.66) a *= 0.12;
-      if (v < 0.05 || v > 0.98) a = 0;
-      const shade = 205 + Math.floor(28 * Math.sin(v * 30));
-      ctx.fillStyle = `rgba(${shade},${shade - 22},${shade - 62},${a})`;
+      // opacité de fond douce (bord interne plus léger, corps dense, bord externe qui s'efface)
+      let a = 0.62 + 0.16 * Math.sin(v * 22) + 0.06 * Math.sin(v * 61);
+      a *= THREE.MathUtils.smoothstep(v, 0.0, 0.16) * (1 - THREE.MathUtils.smoothstep(v, 0.82, 1));
+      // division de Cassini, adoucie
+      const cassini = 1 - 0.82 * Math.exp(-Math.pow((v - 0.63) / 0.028, 2));
+      a *= cassini;
+      const shade = 210 + Math.floor(20 * Math.sin(v * 24));
+      ctx.fillStyle = `rgba(${shade},${shade - 24},${shade - 66},${Math.max(0, a).toFixed(3)})`;
       ctx.fillRect(x, 0, 1, 8);
     }
+    ctx.filter = 'blur(1px)';
+    ctx.drawImage(c, 0, 0);
+    ctx.filter = 'none';
     const t = new THREE.CanvasTexture(c);
     t.colorSpace = THREE.SRGBColorSpace;
     return t;
@@ -131,13 +137,21 @@ export function ringTexture(): THREE.Texture {
 /** Sprite radial (halo du Soleil, points de brume…). */
 export function radialSprite(key: string, stops: [number, string][]): THREE.Texture {
   return memo(`sprite-${key}`, () => {
+    const N = 384;
     const c = document.createElement('canvas');
-    c.width = c.height = 128;
+    c.width = c.height = N;
     const ctx = c.getContext('2d')!;
-    const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    const g = ctx.createRadialGradient(N / 2, N / 2, 0, N / 2, N / 2, N / 2);
     stops.forEach(([o, col]) => g.addColorStop(o, col));
     ctx.fillStyle = g;
-    ctx.fillRect(0, 0, 128, 128);
+    ctx.fillRect(0, 0, N, N);
+    // léger grain : casse le banding des dégradés 8 bits une fois étirés + bloomés
+    ctx.globalAlpha = 0.025;
+    for (let i = 0; i < 2600; i++) {
+      ctx.fillStyle = Math.random() > 0.5 ? '#ffffff' : '#000000';
+      ctx.fillRect(Math.random() * N, Math.random() * N, 1, 1);
+    }
+    ctx.globalAlpha = 1;
     const t = new THREE.CanvasTexture(c);
     t.colorSpace = THREE.SRGBColorSpace;
     return t;
@@ -147,8 +161,8 @@ export function radialSprite(key: string, stops: [number, string][]): THREE.Text
 /** Dégradé vertical du fond spatial + deux nébuleuses très diffuses. */
 export function backdropTexture(): THREE.Texture {
   return memo('backdrop', () => {
-    const W = 512;
-    const H = 256;
+    const W = 1024;
+    const H = 512;
     const c = document.createElement('canvas');
     c.width = W;
     c.height = H;
@@ -177,29 +191,44 @@ export function backdropTexture(): THREE.Texture {
 /** Surface du Soleil : granulation chaude (évite le disque plat). */
 export function sunTexture(): THREE.Texture {
   return memo('sun-surface', () => {
-    const N = 256;
+    const N = 512;
     const c = document.createElement('canvas');
     c.width = N;
     c.height = N;
     const ctx = c.getContext('2d')!;
-    ctx.fillStyle = '#ffcf72';
+    ctx.fillStyle = '#ffd47e';
     ctx.fillRect(0, 0, N, N);
-    for (let i = 0; i < 420; i++) {
+    // granulation fine et dense
+    for (let i = 0; i < 1400; i++) {
       const x = Math.random() * N;
       const y = Math.random() * N;
-      const r = 2 + Math.random() * 9;
+      const r = 1 + Math.random() * 4;
       const rg = ctx.createRadialGradient(x, y, 0, x, y, r);
-      const warm = Math.random() > 0.5;
-      rg.addColorStop(0, warm ? 'rgba(255,244,200,0.5)' : 'rgba(240,140,50,0.4)');
+      const t = Math.random();
+      rg.addColorStop(
+        0,
+        t < 0.5 ? 'rgba(255,248,214,0.32)' : t < 0.8 ? 'rgba(246,158,66,0.28)' : 'rgba(224,110,40,0.24)',
+      );
       rg.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = rg;
       ctx.fillRect(x - r, y - r, r * 2, r * 2);
     }
-    ctx.filter = 'blur(1.5px)';
+    // quelques taches solaires plus sombres
+    for (let i = 0; i < 8; i++) {
+      const x = Math.random() * N;
+      const y = Math.random() * N;
+      const r = 6 + Math.random() * 12;
+      const rg = ctx.createRadialGradient(x, y, 0, x, y, r);
+      rg.addColorStop(0, 'rgba(180,90,30,0.35)');
+      rg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = rg;
+      ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+    ctx.filter = 'blur(1px)';
     ctx.drawImage(c, 0, 0);
     ctx.filter = 'none';
-    const t = new THREE.CanvasTexture(c);
-    t.colorSpace = THREE.SRGBColorSpace;
-    return t;
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
   });
 }

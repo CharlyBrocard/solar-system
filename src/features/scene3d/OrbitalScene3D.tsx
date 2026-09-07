@@ -8,8 +8,9 @@ import {
   type MutableRefObject,
 } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Html, OrbitControls, Stars } from '@react-three/drei';
+import { Billboard, Html, Line, OrbitControls, Stars } from '@react-three/drei';
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
+import { KernelSize } from 'postprocessing';
 import * as THREE from 'three';
 import type { Body } from '@/data/types';
 import type { OrbitalSceneProps } from '@/features/scene/OrbitalScene';
@@ -36,6 +37,18 @@ import styles from './OrbitalScene3D.module.css';
 type OrbitControlsRef = ComponentRef<typeof OrbitControls>;
 type DriftRef = MutableRefObject<number>;
 
+/** Halo d'atmosphère (couleur) pour les corps qui en ont une visible. */
+const ATMOSPHERE: Record<string, string> = {
+  terre: '#8ec9ef',
+  venus: '#f6dfb0',
+  mars: '#e9a97e',
+  titan: '#e0a869',
+  jupiter: '#e9c48a',
+  saturne: '#efdcb2',
+  uranus: '#a8e6e2',
+  neptune: '#7fa8f0',
+};
+
 /* ── fond ─────────────────────────────────────────────────────────────── */
 
 function Backdrop() {
@@ -61,13 +74,22 @@ function CenterBody({
 }) {
   const mesh = useRef<THREE.Mesh>(null);
   const isStar = body.type === 'star';
-  const glow = useMemo(
+  const glowCore = useMemo(
     () =>
-      radialSprite('sun', [
-        [0, 'rgba(255,228,168,0.95)'],
-        [0.26, 'rgba(255,190,104,0.5)'],
-        [0.6, 'rgba(255,150,64,0.14)'],
+      radialSprite('sun-core', [
+        [0, 'rgba(255,236,186,0.8)'],
+        [0.2, 'rgba(255,196,114,0.4)'],
+        [0.46, 'rgba(255,158,80,0.1)'],
         [1, 'rgba(255,150,60,0)'],
+      ]),
+    [],
+  );
+  const glowWide = useMemo(
+    () =>
+      radialSprite('sun-wide', [
+        [0, 'rgba(255,178,108,0.1)'],
+        [0.45, 'rgba(240,138,68,0.03)'],
+        [1, 'rgba(240,138,68,0)'],
       ]),
     [],
   );
@@ -114,15 +136,23 @@ function CenterBody({
 
       {isStar && (
         <>
-          <sprite scale={[radius * 9, radius * 9, 1]}>
+          <sprite scale={[radius * 5.5, radius * 5.5, 1]}>
             <spriteMaterial
-              map={glow}
+              map={glowCore}
               transparent
               depthWrite={false}
               blending={THREE.AdditiveBlending}
             />
           </sprite>
-          <pointLight intensity={820} decay={1.45} color="#fff1d6" />
+          <sprite scale={[radius * 11, radius * 11, 1]}>
+            <spriteMaterial
+              map={glowWide}
+              transparent
+              depthWrite={false}
+              blending={THREE.AdditiveBlending}
+            />
+          </sprite>
+          <pointLight intensity={680} decay={1.5} color="#fff1d6" />
         </>
       )}
     </group>
@@ -149,7 +179,10 @@ function Pin({
   const group = useRef<THREE.Group>(null);
   const mesh = useRef<THREE.Mesh>(null);
   const radius = worldRadius(body.size, 0.45, 5.4);
+  // segments proportionnels à la taille : les petites naines lointaines restent légères
+  const segs = THREE.MathUtils.clamp(Math.round(radius * 9), 14, 44);
   const banded = !!body.banded;
+  const atmosphere = ATMOSPHERE[body.id];
   const map = useMemo(
     () => (revealed ? (banded ? bandedTexture(body) : terrainTexture(body)) : null),
     [revealed, banded, body],
@@ -183,7 +216,7 @@ function Pin({
           onSelect(body);
         }}
       >
-        <sphereGeometry args={[radius, 40, 40]} />
+        <sphereGeometry args={[radius, segs, segs]} />
         {revealed ? (
           <meshStandardMaterial
             map={map ?? undefined}
@@ -206,7 +239,7 @@ function Pin({
 
       {!revealed && (
         <mesh scale={1.14}>
-          <sphereGeometry args={[radius, 24, 24]} />
+          <sphereGeometry args={[radius, 18, 18]} />
           <meshBasicMaterial
             color="#b3a6e6"
             transparent
@@ -219,18 +252,42 @@ function Pin({
 
       {body.rings && revealed && <PlanetRings radius={radius} />}
 
-      {body.id === 'terre' && revealed && (
-        <mesh scale={1.09}>
-          <sphereGeometry args={[radius, 32, 32]} />
-          <meshBasicMaterial color="#8ec9ef" transparent opacity={0.14} side={THREE.BackSide} depthWrite={false} />
-        </mesh>
+      {revealed && atmosphere && (
+        <>
+          <mesh scale={1.055}>
+            <sphereGeometry args={[radius, 28, 28]} />
+            <meshBasicMaterial
+              color={atmosphere}
+              transparent
+              opacity={0.16}
+              side={THREE.BackSide}
+              depthWrite={false}
+            />
+          </mesh>
+          <mesh scale={1.14}>
+            <sphereGeometry args={[radius, 24, 24]} />
+            <meshBasicMaterial
+              color={atmosphere}
+              transparent
+              opacity={0.05}
+              side={THREE.BackSide}
+              depthWrite={false}
+            />
+          </mesh>
+        </>
       )}
 
       {hovered && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[radius * 1.35, radius * 1.5, 48]} />
-          <meshBasicMaterial color="#e8b04b" transparent opacity={0.9} side={THREE.DoubleSide} depthWrite={false} />
-        </mesh>
+        <Billboard>
+          <mesh>
+            <ringGeometry args={[radius * 1.42, radius * 1.58, 64]} />
+            <meshBasicMaterial color="#e8b04b" transparent opacity={0.95} depthWrite={false} toneMapped={false} />
+          </mesh>
+          <mesh>
+            <ringGeometry args={[radius * 1.58, radius * 2, 64]} />
+            <meshBasicMaterial color="#e8b04b" transparent opacity={0.14} depthWrite={false} toneMapped={false} />
+          </mesh>
+        </Billboard>
       )}
     </group>
   );
@@ -271,26 +328,37 @@ function PlanetRings({ radius }: { radius: number }) {
 function OrbitRing3D({
   radius,
   color,
+  dashed,
   highlight,
 }: {
   radius: number;
   color: string;
+  dashed?: boolean;
   highlight?: boolean;
 }) {
   const r = radius * ORBIT_SCALE;
-  const opacity = Math.min(0.9, alphaOf(color, 0.12) * (highlight ? 2.4 : 1.4));
-  const w = highlight ? 0.07 : 0.04;
+  const opacity = Math.min(0.85, alphaOf(color, 0.12) * (highlight ? 2.6 : 1.5));
+  const points = useMemo(() => {
+    const pts: [number, number, number][] = [];
+    for (let i = 0; i <= 128; i++) {
+      const a = (i / 128) * Math.PI * 2;
+      pts.push([Math.cos(a) * r, 0, Math.sin(a) * r]);
+    }
+    return pts;
+  }, [r]);
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]}>
-      <ringGeometry args={[r - w, r + w, 220]} />
-      <meshBasicMaterial
-        color={highlight ? '#e8b04b' : '#f6ebd6'}
-        transparent
-        opacity={opacity}
-        side={THREE.DoubleSide}
-        depthWrite={false}
-      />
-    </mesh>
+    <Line
+      points={points}
+      color={highlight ? '#e8b04b' : '#f6ebd6'}
+      lineWidth={highlight ? 1.6 : 1}
+      transparent
+      opacity={opacity}
+      dashed={dashed}
+      dashSize={1.6}
+      gapSize={2.6}
+      depthWrite={false}
+      toneMapped={false}
+    />
   );
 }
 
@@ -327,26 +395,42 @@ function BeltDots({ dots, driftRef }: { dots: NonNullable<OrbitalSceneProps['dec
 function BeltMarker3D({ marker }: { marker: NonNullable<OrbitalSceneProps['beltMarker']> }) {
   const group = useRef<THREE.Group>(null);
   const ndc = useMemo(() => new THREE.Vector3(), []);
-  const { camera } = useThree();
+  const { camera, size } = useThree();
   const [hot, setHot] = useState(false);
   const r = marker.radius * ORBIT_SCALE;
+  // écran étroit : label court pour ne pas empiéter sur le Soleil
+  const label = size.width < 560 ? marker.label.split(' ')[0] : marker.label;
 
   useFrame(() => {
     const g = group.current;
     if (!g) return;
-    // le label se pose au point de l'anneau le plus loin du centre de l'écran
-    let best = 0;
-    let bestD = -Infinity;
-    for (let a = 0; a < Math.PI * 2; a += Math.PI / 16) {
-      ndc.set(Math.cos(a) * r, 1.2, Math.sin(a) * r).project(camera);
-      if (ndc.z >= 1) continue;
-      const d = Math.hypot(ndc.x, ndc.y);
-      if (d > bestD) {
-        bestD = d;
-        best = a;
+    // le label se pose sur la ceinture : on cherche le point (angle × rayon) qui
+    // reste dans le cadre en priorité, et le plus loin possible du Soleil ensuite.
+    // Le balayage en rayon rattrape les cadrages serrés (mobile) où le bord de
+    // l'anneau sort de l'écran.
+    // on vise l'espace libre sous le Soleil : le point de la ceinture le plus bas
+    // à l'écran, sans sortir du cadre ni empiéter horizontalement sur le centre.
+    let bestX = r;
+    let bestZ = 0;
+    let bestScore = -Infinity;
+    for (const rf of [1, 0.86, 0.72]) {
+      const rr = r * rf;
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 24) {
+        ndc.set(Math.cos(a) * rr, 1.2, Math.sin(a) * rr).project(camera);
+        if (ndc.z >= 1) continue;
+        const score =
+          -ndc.y -
+          Math.max(0, Math.abs(ndc.x) - 0.5) * 22 -
+          Math.max(0, -ndc.y - 0.72) * 22 -
+          (1 - rf) * 0.3;
+        if (score > bestScore) {
+          bestScore = score;
+          bestX = Math.cos(a) * rr;
+          bestZ = Math.sin(a) * rr;
+        }
       }
     }
-    g.position.set(Math.cos(best) * r, 1.2, Math.sin(best) * r);
+    g.position.set(bestX, 1.2, bestZ);
   });
 
   return (
@@ -387,7 +471,7 @@ function BeltMarker3D({ marker }: { marker: NonNullable<OrbitalSceneProps['beltM
             data-hot={hot ? 'true' : undefined}
             onClick={marker.onClick}
           >
-            {marker.label}
+            {label}
           </button>
         </Html>
       </group>
@@ -465,27 +549,38 @@ function CameraRig({
     cam.fov = portrait ? THREE.MathUtils.clamp(96 - aspect * 34, 60, 84) : 44;
     const vFov = (cam.fov * Math.PI) / 180;
     const hFov = 2 * Math.atan(Math.tan(vFov / 2) * aspect);
-    // mode décor (écran d'entrée) : cadrage fixe et généreux, on ignore `zoom`
-    const frameRadius = !interactive
-      ? sceneRadius
-      : portrait
-        ? sceneRadius * 0.7
-        : sceneRadius;
-    const fill = !interactive ? 0.58 : portrait ? 0.92 : 0.74;
-    const d = frameRadius / (fill * Math.tan(hFov / 2));
+    const elev = THREE.MathUtils.degToRad(portrait ? 46 : ELEVATION_DEG);
+
+    let d: number;
+    if (portrait) {
+      // le disque orbital est fortement écrasé par la projection : cadrer sur sa
+      // largeur laisse le viewport à moitié vide en hauteur. On cadre donc sur sa
+      // hauteur écran (≈ rayon · sin(élévation)) et on laisse les orbites externes
+      // déborder sur les côtés — le pincé-zoom permet de reculer.
+      const inner = sceneRadius * 0.62;
+      d = (inner * Math.sin(elev)) / (0.7 * Math.tan(vFov / 2));
+    } else {
+      // mode décor (écran d'entrée) : cadrage fixe et généreux, on ignore `zoom`
+      const fill = !interactive ? 0.58 : 0.74;
+      d = sceneRadius / (fill * Math.tan(hFov / 2));
+    }
     fitDist.current = d;
     targetDist.current = interactive ? d / zoom : d;
     cam.near = Math.max(0.3, d * 0.015);
     cam.far = d * 5 + 800;
     cam.updateProjectionMatrix();
 
-    const elev = THREE.MathUtils.degToRad(portrait ? 49 : ELEVATION_DEG);
     defaultElev.current = elev;
     cam.position.set(0, Math.sin(elev) * targetDist.current, Math.cos(elev) * targetDist.current);
     const c = controls.current;
     if (c) {
-      // en portrait, viser un poil vers le proche → le disque remonte à l'écran
-      c.target.set(0, 0, portrait ? sceneRadius * 0.32 : 0);
+      // portrait : viser légèrement devant le centre → le disque bascule vers le
+      // haut et se pose au milieu du viewport laissé libre par le HUD.
+      c.target.set(
+        0,
+        portrait ? -sceneRadius * 0.04 : 0,
+        portrait ? sceneRadius * 0.12 : 0,
+      );
       c.minDistance = d / zoomRange[1];
       c.maxDistance = d / zoomRange[0];
       c.update();
@@ -554,6 +649,7 @@ function DiveController({
   driftRef,
   controls,
   onColor,
+  onProgress,
   onDone,
 }: {
   diveTo: string | null;
@@ -562,6 +658,7 @@ function DiveController({
   driftRef: DriftRef;
   controls: React.RefObject<OrbitControlsRef>;
   onColor: (c: string | null) => void;
+  onProgress: (t: number) => void;
   onDone: (id: string) => void;
 }) {
   const { camera } = useThree();
@@ -578,6 +675,7 @@ function DiveController({
     if (!diveTo) {
       state.current = null;
       onColor(null);
+      onProgress(0);
       return;
     }
     const target =
@@ -625,6 +723,7 @@ function DiveController({
     camera.position.copy(s.from).lerp(s.dest, k);
     c.target.copy(s.fromTarget).lerp(s.destTarget, k);
     c.update();
+    onProgress(s.t);
     if (s.t >= 1) {
       const id = s.id;
       state.current = null;
@@ -642,11 +741,13 @@ function Scene({
   controls,
   sceneRadius,
   onDiveColor,
+  onDiveProgress,
 }: {
   props: OrbitalSceneProps;
   controls: React.RefObject<OrbitControlsRef>;
   sceneRadius: number;
   onDiveColor: (c: string | null) => void;
+  onDiveProgress: (t: number) => void;
 }) {
   const {
     rings,
@@ -707,7 +808,13 @@ function Scene({
       <Stars radius={sceneRadius * 2.4} depth={sceneRadius} count={3200} factor={4} saturation={0} fade speed={0.32} />
 
       {rings.map((r) => (
-        <OrbitRing3D key={r.radius} radius={r.radius} color={r.color} highlight={r.highlight} />
+        <OrbitRing3D
+          key={r.radius}
+          radius={r.radius}
+          color={r.color}
+          dashed={r.dashed}
+          highlight={r.highlight}
+        />
       ))}
 
       {centerBody && (
@@ -772,11 +879,20 @@ function Scene({
         driftRef={driftRef}
         controls={controls}
         onColor={onDiveColor}
+        onProgress={onDiveProgress}
         onDone={(id) => onDiveComplete?.(id)}
       />
 
-      <EffectComposer>
-        <Bloom mipmapBlur luminanceThreshold={0.6} luminanceSmoothing={0.25} intensity={0.85} radius={0.72} />
+      <EffectComposer multisampling={0}>
+        <Bloom
+          mipmapBlur
+          levels={8}
+          kernelSize={KernelSize.HUGE}
+          luminanceThreshold={0.62}
+          luminanceSmoothing={0.35}
+          intensity={0.7}
+          radius={0.78}
+        />
       </EffectComposer>
     </>
   );
@@ -787,6 +903,10 @@ function Scene({
 export function OrbitalScene3D(props: OrbitalSceneProps) {
   const controls = useRef<OrbitControlsRef>(null);
   const [diveColor, setDiveColor] = useState<string | null>(null);
+  const [diveT, setDiveT] = useState(0);
+  // opacité du voile pilotée par la progression de la plongée (même horloge que
+  // la caméra) — plus fiable qu'une transition CSS pendant le rendu WebGL.
+  const veilOpacity = THREE.MathUtils.clamp(diveT * 1.5, 0, 0.94);
 
   const sceneRadius = useMemo(() => {
     const maxRing = Math.max(1, ...props.rings.map((r) => r.radius));
@@ -820,6 +940,7 @@ export function OrbitalScene3D(props: OrbitalSceneProps) {
             controls={controls}
             sceneRadius={sceneRadius}
             onDiveColor={setDiveColor}
+            onDiveProgress={setDiveT}
           />
         </Suspense>
       </Canvas>
@@ -836,8 +957,8 @@ export function OrbitalScene3D(props: OrbitalSceneProps) {
       {diveColor && (
         <div
           className={styles.diveVeil}
-          data-on="true"
           style={{
+            opacity: veilOpacity,
             background: `radial-gradient(circle at 50% 50%, ${diveColor}55 0%, ${diveColor}22 22%, rgba(11,10,29,0) 42%), radial-gradient(circle at 50% 50%, rgba(11,10,29,0) 24%, rgba(11,10,29,0.6) 66%, rgba(11,10,29,0.97) 100%)`,
           }}
         />
