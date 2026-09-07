@@ -28,6 +28,8 @@ const TYPE_COLOR: Record<BodyType, string> = {
   small: 'var(--type-small)',
 };
 
+const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(v, hi));
+
 export function ObjectSheet() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -73,6 +75,15 @@ function DiscoveredSheet({ body, onBack, onGo }: SheetProps) {
   const isEarth = body.id === 'terre';
   const locked = isTidallyLocked(body);
   const parentName = body.parent ? (bodyById(body.parent)?.name ?? 'sa planète') : '';
+  const heroMoons = useMemo(
+    () =>
+      moons.slice(0, 4).map((m) => ({
+        id: m.id,
+        color: m.gradient[1],
+        size: clamp(m.size / 260, 0.045, 0.11),
+      })),
+    [moons],
+  );
 
   const simplified = useProgress((s) => s.prefs.simplified);
   const readAloud = useProgress((s) => s.prefs.readAloud);
@@ -87,12 +98,17 @@ function DiscoveredSheet({ body, onBack, onGo }: SheetProps) {
 
   return (
     <div className={styles.screen}>
+      <BodyHero
+        className={styles.backdropBody}
+        body={body}
+        size={0}
+        bleed
+        tint={body.type === 'star' ? '#1c1636' : '#181234'}
+        moons={heroMoons.length ? heroMoons : undefined}
+      />
+      <div className={styles.backdropGlow} data-star={body.type === 'star' ? 'true' : undefined} />
       <div className={styles.nebula} />
       <div className={styles.particles} />
-      {body.type === 'star' && <div className={styles.backdropGlow} />}
-      <div className={styles.backdropBody}>
-        <BodyHero body={body} size={Math.min(body.size * 4.5, 240)} tint="#261c48" />
-      </div>
       <div className={styles.veil} />
 
       <div className={styles.breadcrumb}>
@@ -220,11 +236,17 @@ function LockedSheet({
 
   return (
     <div className={styles.screen} data-locked="true">
+      <BodyHero
+        className={styles.backdropBody}
+        body={body}
+        size={0}
+        bleed
+        silhouette
+        tint="#181234"
+      />
+      <div className={styles.backdropGlow} />
       <div className={styles.nebula} />
       <div className={styles.particles} />
-      <div className={styles.backdropBody}>
-        <BodyHero body={body} size={Math.min(body.size * 4, 200)} silhouette tint="#221a44" />
-      </div>
       <div className={styles.veil} />
 
       <div className={styles.breadcrumb}>

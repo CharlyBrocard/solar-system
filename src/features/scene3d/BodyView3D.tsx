@@ -1,18 +1,12 @@
-import { Suspense, useMemo, useRef } from 'react';
+import { Suspense, useEffect, useMemo, useRef } from 'react';
 import type { CSSProperties } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { KernelSize } from 'postprocessing';
 import * as THREE from 'three';
 import type { Body } from '@/data/types';
 import { bandedTexture, radialSprite, ringTexture, sunTexture, terrainTexture } from './materials';
 import { ATMOSPHERE, prefersReducedMotion } from './scene3d';
-
-/** #rrggbb → rgba(r,g,b,a) */
-function hexToRgba(hex: string, a: number): string {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
-}
 
 /**
  * Rendu 3D d'un seul astre — même matière/éclairage que la scène orbitale, mais
@@ -23,6 +17,14 @@ function hexToRgba(hex: string, a: number): string {
  * transparent laisse un voile carré sur certains GPU. Le bord franc du canvas est
  * juste estompé par un léger masque circulaire CSS.
  */
+
+export interface HeroMoon {
+  id: string;
+  /** teinte (gradient[1] de la lune) */
+  color: string;
+  /** taille relative au corps central, ~0.04–0.12 */
+  size: number;
+}
 
 interface BodyView3DProps {
   body: Body;
@@ -36,9 +38,37 @@ interface BodyView3DProps {
   spin?: boolean;
   /** couleur de fond de la surface hôte : le canvas est opaque et s'y fond */
   tint?: string;
+  /** lunes qui gravitent autour du corps (aperçu du sous-système) */
+  moons?: HeroMoon[];
+  /**
+   * `bleed` : le canvas occupe tout le conteneur (`position` géré par le parent),
+   * l'astre est décalé vers la gauche. Plus de masque : le fond du canvas EST
+   * le fond de l'écran. Pour la fiche `/object`.
+   */
+  bleed?: boolean;
 }
 
-function Sphere({ body, silhouette, spin }: Pick<BodyView3DProps, 'body' | 'silhouette' | 'spin'>) {
+/** Décale la projection pour poser l'astre ~32 % depuis la gauche. */
+function LeftBiasedCamera() {
+  const { camera, size } = useThree();
+  useEffect(() => {
+    const cam = camera as THREE.PerspectiveCamera;
+    cam.setViewOffset(size.width, size.height, size.width * 0.2, 0, size.width, size.height);
+    cam.updateProjectionMatrix();
+    return () => {
+      cam.clearViewOffset();
+      cam.updateProjectionMatrix();
+    };
+  }, [camera, size]);
+  return null;
+}
+
+function Sphere({
+  body,
+  silhouette,
+  spin,
+  moons,
+}: Pick<BodyView3DProps, 'body' | 'silhouette' | 'spin' | 'moons'>) {
   const mesh = useRef<THREE.Mesh>(null);
   const isStar = body.type === 'star';
   const reduced = useMemo(prefersReducedMotion, []);
@@ -72,19 +102,6 @@ function Sphere({ body, silhouette, spin }: Pick<BodyView3DProps, 'body' | 'silh
   );
 
   const atmosphere = ATMOSPHERE[body.id];
-  const atmoGlow = useMemo(
-    () =>
-      atmosphere
-        ? radialSprite(`hero-atmo-${body.id}`, [
-            [0, 'rgba(0,0,0,0)'],
-            [0.34, 'rgba(0,0,0,0)'],
-            [0.41, hexToRgba(atmosphere, 0.24)],
-            [0.52, hexToRgba(atmosphere, 0.05)],
-            [1, hexToRgba(atmosphere, 0)],
-          ])
-        : null,
-    [atmosphere, body.id],
-  );
 
   useFrame((_, dt) => {
     if (mesh.current && spinning) mesh.current.rotation.y += dt * 0.16;
@@ -127,7 +144,7 @@ function Sphere({ body, silhouette, spin }: Pick<BodyView3DProps, 'body' | 'silh
             roughness={0.85}
             metalness={0}
             emissive={body.gradient[1]}
-            emissiveIntensity={0.14}
+            emissiveIntensity={0.2}
           />
         )}
       </mesh>
@@ -146,18 +163,57 @@ function Sphere({ body, silhouette, spin }: Pick<BodyView3DProps, 'body' | 'silh
           </sprite>
         ))}
 
-      {atmoGlow && (
-        <sprite scale={[2.7, 2.7, 1]}>
-          <spriteMaterial
-            map={atmoGlow}
+      {atmosphere && (
+        <mesh scale={1.025}>
+          <sphereGeometry args={[1, 48, 48]} />
+          <meshBasicMaterial
+            color={atmosphere}
             transparent
+            opacity={0.1}
+            side={THREE.BackSide}
             depthWrite={false}
-            blending={THREE.AdditiveBlending}
           />
-        </sprite>
+        </mesh>
       )}
 
       {body.rings && <Rings />}
+      {moons && moons.length > 0 && <Moons moons={moons} turning={spinning} />}
+    </group>
+  );
+}
+
+/** Petites lunes en orbite lente autour du corps — aperçu du sous-système. */
+function Moons({ moons, turning }: { moons: HeroMoon[]; turning: boolean }) {
+  const group = useRef<THREE.Group>(null);
+  const orbits = useMemo(
+    () =>
+      moons.slice(0, 4).map((m, i) => ({
+        ...m,
+        r: 1.34 + i * 0.28,
+        phase: (i / moons.length) * Math.PI * 2 + 0.6,
+        speed: 0.26 - i * 0.035,
+        tilt: -0.34 + i * 0.05,
+      })),
+    [moons],
+  );
+  useFrame((state) => {
+    if (!group.current || !turning) return;
+    const t = state.clock.elapsedTime;
+    group.current.children.forEach((child, i) => {
+      const o = orbits[i];
+      if (!o) return;
+      const a = o.phase + t * o.speed;
+      child.position.set(Math.cos(a) * o.r, Math.sin(a) * o.r * o.tilt, Math.sin(a) * o.r * 0.9);
+    });
+  });
+  return (
+    <group ref={group}>
+      {orbits.map((o) => (
+        <mesh key={o.id}>
+          <sphereGeometry args={[Math.max(0.05, o.size), 20, 20]} />
+          <meshStandardMaterial color={o.color} roughness={0.9} emissive={o.color} emissiveIntensity={0.1} />
+        </mesh>
+      ))}
     </group>
   );
 }
@@ -200,24 +256,25 @@ export function BodyView3D({
   silhouette,
   spin,
   tint = '#251c48',
+  moons,
+  bleed,
 }: BodyView3DProps) {
   const isStar = body.type === 'star';
-  // caméra reculée : anneaux/halo restent dans la zone nette du masque.
-  const dist = body.rings ? 9.4 : isStar ? 6.2 : 4.6;
+  // distance calée pour que le corps occupe ~62 % de la demi-hauteur du cadre.
+  const dist = body.rings ? (bleed ? 10.6 : 12.8) : isStar ? 9.5 : bleed ? 6.2 : 6;
 
-  return (
-    <div
-      className={className}
-      style={{
+  const wrapStyle: CSSProperties = bleed
+    ? { ...style }
+    : {
         width: size,
         height: size,
-        // estompe seulement le bord franc du canvas (le fond est déjà `tint`).
-        WebkitMaskImage: 'radial-gradient(circle closest-side, #000 88%, transparent 100%)',
-        maskImage: 'radial-gradient(circle closest-side, #000 88%, transparent 100%)',
+        WebkitMaskImage: 'radial-gradient(circle closest-side, #000 64%, transparent 100%)',
+        maskImage: 'radial-gradient(circle closest-side, #000 64%, transparent 100%)',
         ...style,
-      }}
-      aria-hidden
-    >
+      };
+
+  return (
+    <div className={className} style={wrapStyle} aria-hidden>
       <Canvas
         dpr={[1, 2]}
         gl={{ antialias: true }}
@@ -225,14 +282,18 @@ export function BodyView3D({
         onCreated={({ camera }) => camera.lookAt(0, 0, 0)}
       >
         <color attach="background" args={[tint]} />
-        <fog attach="fog" args={[tint, dist + 0.8, dist + 4]} />
+        {bleed && <LeftBiasedCamera />}
         <Suspense fallback={null}>
-          <ambientLight intensity={isStar ? 0.95 : 0.5} />
-          <hemisphereLight args={['#5a6aa0', '#3a2a1e', 0.35]} />
+          <ambientLight intensity={isStar ? 0.95 : 0.72} />
+          <hemisphereLight args={['#6a7ab0', '#40352a', 0.45]} />
           {!isStar && (
-            <directionalLight position={[-3.2, 2.6, 3.4]} intensity={2.4} color="#fff2df" />
+            <>
+              <directionalLight position={[-3.2, 2.6, 3.4]} intensity={2.1} color="#fff2df" />
+              {/* contre-jour doux : évite un limbe trop sombre en « portrait » */}
+              <directionalLight position={[3.4, -1.2, 1.8]} intensity={0.55} color="#9fb4e0" />
+            </>
           )}
-          <Sphere body={body} silhouette={silhouette} spin={spin} />
+          <Sphere body={body} silhouette={silhouette} spin={spin} moons={moons} />
           <EffectComposer multisampling={0}>
             <Bloom
               mipmapBlur

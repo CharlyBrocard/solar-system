@@ -26,10 +26,11 @@
   position: absolute;
   left: -140px;
   top: -120px;
+  z-index: 1;
   width: 660px;
   height: 520px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(190, 74, 120, 0.42), rgba(190, 74, 120, 0) 66%);
+  background: radial-gradient(circle, rgba(190, 74, 120, 0.28), rgba(190, 74, 120, 0) 66%);
   filter: blur(20px);
   pointer-events: none;
 }
@@ -43,6 +44,7 @@
 .particles {
   position: absolute;
   inset: 0;
+  z-index: 1;
   pointer-events: none;
   background-image: radial-gradient(1.5px 1.5px at 12% 18%, #fff6e0 50%, transparent 52%),
     radial-gradient(1.3px 1.3px at 27% 9%, #ffe6b8 50%, transparent 52%),
@@ -52,37 +54,56 @@
     radial-gradient(1.3px 1.3px at 62% 72%, #ffe6b8 50%, transparent 52%);
 }
 
-/* astre en fond, derrière le panneau */
+/* rendu 3D de l'astre : plein cadre, derrière tout le reste */
 .backdropBody {
-  position: absolute;
-  left: 30%;
-  top: 56%;
-  transform: translate(-50%, -50%);
+  position: fixed;
+  inset: 0;
+  z-index: 0;
   pointer-events: none;
 }
 
+/* halo diffus autour de l'astre : le pose dans un bain de lumière, pas dans le noir */
 .backdropGlow {
   position: absolute;
   left: 30%;
-  top: 56%;
-  width: 520px;
-  height: 520px;
+  top: 50%;
+  z-index: 1;
+  width: 78vw;
+  max-width: 1100px;
+  aspect-ratio: 1;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 186, 80, 0.16), rgba(255, 150, 60, 0) 62%);
+  background: radial-gradient(
+    circle,
+    rgba(150, 150, 210, 0.12),
+    rgba(130, 120, 190, 0.04) 42%,
+    rgba(130, 120, 190, 0) 66%
+  );
   pointer-events: none;
 }
 
+.backdropGlow[data-star='true'] {
+  background: radial-gradient(
+    circle,
+    rgba(255, 190, 95, 0.16),
+    rgba(255, 150, 60, 0.04) 42%,
+    rgba(255, 150, 60, 0) 66%
+  );
+}
+
+/* vignette : referme les coins, ménage le contraste sous le panneau */
 .veil {
   position: absolute;
   inset: 0;
+  z-index: 1;
   pointer-events: none;
-  background: radial-gradient(
-    ellipse 32% 30% at 30% 56%,
-    rgba(24, 18, 52, 0) 54%,
-    rgba(28, 20, 60, 0.55) 84%,
-    rgba(18, 14, 42, 0.8) 100%
-  );
+  background:
+    radial-gradient(
+      ellipse 96% 96% at 34% 50%,
+      rgba(16, 12, 38, 0) 72%,
+      rgba(14, 11, 34, 0.55) 100%
+    ),
+    linear-gradient(90deg, rgba(16, 12, 38, 0) 52%, rgba(16, 12, 38, 0.32) 100%);
 }
 
 /* fil d'Ariane */
