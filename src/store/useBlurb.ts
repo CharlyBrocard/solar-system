@@ -1,5 +1,6 @@
 import type { Body } from '@/data/types';
 import { simpleBlurb } from '@/data/blurbsSimple';
+import { simpleHighlights } from '@/data/highlightsSimple';
 import { useProgress } from './progress';
 
 /**
@@ -11,4 +12,14 @@ export function useBlurb(body: Body | null | undefined): string {
   const simplified = useProgress((s) => s.prefs.simplified);
   if (!body) return '';
   return simplified ? simpleBlurb(body.id, body.blurb) : body.blurb;
+}
+
+/**
+ * Les « faits marquants » d'un objet, adaptés au « mode simplifié » — version
+ * courte de `src/data/highlightsSimple.ts`, sinon les `highlights` normaux.
+ */
+export function useHighlights(body: Body | null | undefined): string[] {
+  const simplified = useProgress((s) => s.prefs.simplified);
+  if (!body) return [];
+  return simplified ? simpleHighlights(body.id, body.highlights) : body.highlights;
 }

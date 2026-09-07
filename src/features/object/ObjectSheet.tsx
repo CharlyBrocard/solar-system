@@ -15,7 +15,7 @@ import {
 } from '@/data/format';
 import { useProgress } from '@/store/progress';
 import { revealHint, unlockedZones } from '@/store/selectors';
-import { useBlurb } from '@/store/useBlurb';
+import { useBlurb, useHighlights } from '@/store/useBlurb';
 import { useReadAloud } from '@/lib/speech';
 import styles from './ObjectSheet.module.css';
 
@@ -74,10 +74,11 @@ function DiscoveredSheet({ body, onBack, onGo }: SheetProps) {
   const simplified = useProgress((s) => s.prefs.simplified);
   const readAloud = useProgress((s) => s.prefs.readAloud);
   const blurb = useBlurb(body);
+  const highlights = useHighlights(body);
   useReadAloud(
     simplified
-      ? `${body.name}. ${blurb}`
-      : `${body.name}. ${describeBody(body)}. ${body.blurb} ${body.highlights.join('. ')}`,
+      ? `${body.name}. ${blurb} ${highlights.join(' ')}`
+      : `${body.name}. ${describeBody(body)}. ${body.blurb} ${highlights.join('. ')}`,
     readAloud,
   );
 
@@ -138,7 +139,7 @@ function DiscoveredSheet({ body, onBack, onGo }: SheetProps) {
 
         <div className={styles.section}>
           <span className={styles.sectionLabel}>Faits marquants</span>
-          {body.highlights.map((h) => (
+          {highlights.map((h) => (
             <div key={h} className={styles.fact}>
               <span className={styles.factDot} />
               <span className={styles.factText}>{h}</span>
