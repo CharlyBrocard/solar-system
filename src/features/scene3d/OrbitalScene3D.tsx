@@ -826,12 +826,27 @@ function Scene({
   } = props;
 
   const driftRef = useRef(0);
+  const fogRef = useRef<THREE.Fog>(null);
   const [dragging, setDragging] = useState(false);
   const reduced = useMemo(prefersReducedMotion, []);
   const driftActive = drift && !reduced && !dragging && hoveredId === null && !diveTo;
 
+  // brume cosmique : plus les zones sont scellées, plus le brouillard se resserre
+  // → tout ce qui est au-delà du système exploré se perd dans la nuit.
+  const o = THREE.MathUtils.clamp(fogOpenness, 0, 1);
+
   useFrame((_, dt) => {
     if (driftActive) driftRef.current += dt * DRIFT_DEG_PER_SEC;
+
+    // La brume suit la caméra : sa bande est ancrée à la distance caméra→centre,
+    // pas à une valeur fixe. Sans ça, un fort dézoom repoussait tous les astres
+    // au-delà de `far` et les faisait disparaître dans le brouillard.
+    const c = controls.current;
+    if (fogRef.current && c) {
+      const dist = c.getDistance();
+      fogRef.current.near = dist + sceneRadius * THREE.MathUtils.lerp(-0.15, 1.35, o);
+      fogRef.current.far = dist + sceneRadius * THREE.MathUtils.lerp(0.9, 3.4, o);
+    }
   });
 
   const hoveredPin = pins.find((p) => p.body.id === hoveredId);
@@ -840,16 +855,14 @@ function Scene({
     ? worldRadius(centerSize, centerIsStar ? 5 : 1.8, centerIsStar ? 6.5 : 6)
     : 0;
 
-  // brume cosmique : plus les zones sont scellées, plus le brouillard se resserre
-  // → tout ce qui est au-delà du système exploré se perd dans la nuit.
-  const o = THREE.MathUtils.clamp(fogOpenness, 0, 1);
-  const fogNear = sceneRadius * THREE.MathUtils.lerp(0.55, 1.7, o);
-  const fogFar = sceneRadius * THREE.MathUtils.lerp(1.7, 4.4, o);
-
   return (
     <>
       <color attach="background" args={['#0b0a1d']} />
-      <fog attach="fog" args={['#0e0b22', fogNear, fogFar]} />
+      <fog
+        ref={fogRef}
+        attach="fog"
+        args={['#0e0b22', sceneRadius * 2, sceneRadius * 5]}
+      />
       <ambientLight intensity={centerIsStar ? 0.42 : 0.5} />
       <hemisphereLight args={['#4a5a8f', '#3a2a1e', 0.3]} />
       {/* sous-carte (pas d'étoile au centre) : lumière-clé venue du « Soleil » */}
