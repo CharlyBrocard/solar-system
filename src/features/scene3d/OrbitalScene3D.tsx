@@ -37,6 +37,8 @@ import {
   worldRadius,
 } from './scene3d';
 import { useQuality, type QualitySettings, type QualityTier } from './quality';
+import { ShipMesh, shipBanks } from './Ship3D';
+import { shipDef } from '@/components/Ship';
 import { useProgress } from '@/store/progress';
 import styles from './OrbitalScene3D.module.css';
 
@@ -787,6 +789,142 @@ function CameraRig({
 
 /* ── plongée ──────────────────────────────────────────────────────────── */
 
+/**
+ * Le vaisseau de l'explorateur file jusqu'à l'astre cliqué avant la plongée
+ * caméra. Trajectoire = arc de Bézier depuis le bord du cadre ; le nez pointe
+ * dans la direction. `prefers-reduced-motion` → on saute droit à la plongée.
+ */
+function ShipTravel({
+  diveTo,
+  pins,
+  centerBody,
+  driftRef,
+  avatarId,
+  onArrived,
+}: {
+  diveTo: string | null;
+  pins: OrbitalSceneProps['pins'];
+  centerBody?: Body;
+  driftRef: DriftRef;
+  avatarId: number;
+  onArrived: () => void;
+}) {
+  const { camera } = useThree();
+  const holder = useRef<THREE.Group>(null);
+  const trip = useRef<{ curve: THREE.QuadraticBezierCurve3; t: number; dur: number } | null>(null);
+  const [linePts, setLinePts] = useState<THREE.Vector3[] | null>(null);
+
+  const accent = useMemo(() => shipDef(avatarId).accent, [avatarId]);
+  // sprite blanc, teinté à la couleur du vaisseau par le matériau
+  const engineGlow = useMemo(
+    () =>
+      radialSprite('ship-engine', [
+        [0, 'rgba(255,255,255,0.9)'],
+        [0.4, 'rgba(255,255,255,0.28)'],
+        [1, 'rgba(255,255,255,0)'],
+      ]),
+    [],
+  );
+
+  useEffect(() => {
+    if (!diveTo) {
+      trip.current = null;
+      setLinePts(null);
+      return;
+    }
+    const target =
+      centerBody?.id === diveTo
+        ? centerBody
+        : pins.find((p) => p.body.id === diveTo)?.body;
+    // clic sur l'astre central, ou mouvement réduit : pas de voyage, on plonge
+    if (!target || target.id === centerBody?.id || prefersReducedMotion()) {
+      onArrived();
+      return;
+    }
+
+    const dest = orbitPosition(target, driftRef.current, new THREE.Vector3());
+    const targetR = worldRadius(target.size, 0.45, 5.4);
+    const destLen = dest.length() || 8;
+
+    // direction vers la caméra (pour sortir l'arc du plan des orbites)
+    const toCam = camera.getWorldDirection(new THREE.Vector3()).negate();
+
+    // départ : ~un quart du chemin, nettement soulevé vers la caméra → le
+    // vaisseau apparaît en plein espace, pas noyé dans le halo du Soleil
+    const start = dest
+      .clone()
+      .multiplyScalar(0.28)
+      .addScaledVector(toCam, destLen * 0.4 + 6);
+    // point de contrôle : à mi-chemin, soulevé → arc bombé au-dessus du plan
+    const ctrl = start
+      .clone()
+      .lerp(dest, 0.5)
+      .addScaledVector(toCam, destLen * 0.35 + 5);
+    // on s'arrête juste devant l'astre
+    const arrive = dest
+      .clone()
+      .addScaledVector(dest.clone().sub(start).normalize(), -Math.max(targetR * 2, 2.5));
+
+    const curve = new THREE.QuadraticBezierCurve3(start, ctrl, arrive);
+    trip.current = { curve, t: 0, dur: 0.9 };
+    setLinePts(curve.getPoints(48));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [diveTo]);
+
+  useFrame((_, dt) => {
+    const p = trip.current;
+    const g = holder.current;
+    if (!p || !g) return;
+    // borne l'avancée : un gros `dt` (compilation shader) ne doit pas sauter l'anim
+    p.t = Math.min(1, p.t + Math.min(dt / p.dur, 0.16));
+    const e = p.t < 0.5 ? 2 * p.t * p.t : 1 - Math.pow(-2 * p.t + 2, 2) / 2;
+    const pos = p.curve.getPoint(e);
+    g.position.copy(pos);
+    g.lookAt(p.curve.getPoint(Math.min(1, e + 0.03)));
+    g.visible = true;
+    if (p.t >= 1) {
+      trip.current = null;
+      g.visible = false;
+      setLinePts(null);
+      onArrived();
+    }
+  });
+
+  if (!linePts) return null;
+
+  const banks = shipBanks(avatarId);
+  return (
+    <>
+      <Line
+        points={linePts}
+        color={accent}
+        lineWidth={1.4}
+        transparent
+        opacity={0.42}
+        dashed
+        dashSize={0.7}
+        gapSize={0.5}
+      />
+      <group ref={holder} visible={false} scale={4.6}>
+        {/* modèle nez=+Y → -Z pour suivre lookAt ; soucoupe reste à plat */}
+        <group rotation={banks ? [-Math.PI / 2, 0, 0] : [0, 0, 0]}>
+          <ShipMesh id={avatarId} />
+        </group>
+        {/* lueur de réacteur, derrière le vaisseau, teintée à sa couleur */}
+        <sprite position={[0, 0, banks ? 1.2 : 0.1]} scale={[3.4, 3.4, 1]}>
+          <spriteMaterial
+            map={engineGlow}
+            color={accent}
+            transparent
+            depthWrite={false}
+            blending={THREE.AdditiveBlending}
+          />
+        </sprite>
+      </group>
+    </>
+  );
+}
+
 function DiveController({
   diveTo,
   pins,
@@ -861,7 +999,7 @@ function DiveController({
     const s = state.current;
     const c = controls.current;
     if (!s || !c) return;
-    s.t = Math.min(1, s.t + dt / 0.7);
+    s.t = Math.min(1, s.t + Math.min(dt / 0.72, 0.14));
     // accélère vers l'astre (plongée), puis décroche à la fin
     const e = s.t < 0.82 ? 1.24 * s.t * s.t : 1 - Math.pow(1 - s.t, 2) * 3.9;
     const k = THREE.MathUtils.clamp(e, 0, 1);
@@ -921,6 +1059,13 @@ function Scene({
   const [dragging, setDragging] = useState(false);
   const reduced = useMemo(prefersReducedMotion, []);
   const driftActive = drift && !reduced && !dragging && hoveredId === null && !diveTo;
+
+  // le vaisseau voyage d'abord jusqu'à l'astre, puis la plongée caméra démarre
+  const avatarId = useProgress((s) => s.avatarId);
+  const [diveArmed, setDiveArmed] = useState(false);
+  useEffect(() => {
+    if (!diveTo) setDiveArmed(false);
+  }, [diveTo]);
 
   // brume cosmique : plus les zones sont scellées, plus le brouillard se resserre
   // → tout ce qui est au-delà du système exploré se perd dans la nuit.
@@ -1064,8 +1209,17 @@ function Scene({
         controls={controls}
       />
 
+      <ShipTravel
+        diveTo={diveArmed ? null : diveTo}
+        pins={pins}
+        centerBody={centerBody}
+        driftRef={driftRef}
+        avatarId={avatarId}
+        onArrived={() => setDiveArmed(true)}
+      />
+
       <DiveController
-        diveTo={diveTo}
+        diveTo={diveArmed ? diveTo : null}
         pins={pins}
         centerBody={centerBody}
         driftRef={driftRef}

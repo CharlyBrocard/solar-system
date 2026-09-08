@@ -206,6 +206,24 @@ const MODELS: { Comp: (p: { accent: string }) => ReactElement; scale: number; y:
   { Comp: Lander, scale: 1.04, y: 0.0 },
 ];
 
+/**
+ * Juste les primitives d'un vaisseau (sans `<Canvas>` ni animation), à intégrer
+ * dans une autre scène r3f — p. ex. le vaisseau qui voyage sur la carte.
+ * Le modèle est dessiné « nez vers le haut » (+Y).
+ */
+export function ShipMesh({ id }: { id: number }) {
+  const { Comp, scale } = MODELS[id] ?? MODELS[0];
+  const accent = shipDef(id).accent;
+  return (
+    <group scale={scale}>
+      <Comp accent={accent} />
+    </group>
+  );
+}
+
+/** La soucoupe glisse à plat ; les autres pointent le nez dans la direction. */
+export const shipBanks = (id: number) => id !== 1;
+
 function ShipModel({ id, reduced }: { id: number; reduced: boolean }) {
   const group = useRef<THREE.Group>(null);
   const { Comp, scale, y } = MODELS[id] ?? MODELS[0];
