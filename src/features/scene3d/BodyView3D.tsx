@@ -163,7 +163,7 @@ function Sphere({
 
   return (
     <group rotation={[0.15, 0, 0.05]}>
-      <mesh ref={mesh}>
+      <mesh ref={mesh} castShadow={!isStar} receiveShadow={!isStar}>
         <sphereGeometry args={[1, seg, seg]} />
         {isStar ? (
           sunShader ? (
@@ -234,7 +234,7 @@ function Moons({ moons, turning }: { moons: HeroMoon[]; turning: boolean }) {
   return (
     <group ref={group}>
       {orbits.map((o) => (
-        <mesh key={o.id}>
+        <mesh key={o.id} castShadow receiveShadow>
           <sphereGeometry args={[Math.max(0.05, o.size), 20, 20]} />
           <meshStandardMaterial color={o.color} roughness={0.9} emissive={o.color} emissiveIntensity={0.1} />
         </mesh>
@@ -259,8 +259,25 @@ function Rings() {
     uv.needsUpdate = true;
     return g;
   }, []);
+  // matériau de profondeur alpha-testé → l'ombre portée épouse la forme de
+  // l'anneau (avec la division de Cassini) au lieu d'un disque plein.
+  const depthMat = useMemo(
+    () =>
+      new THREE.MeshDepthMaterial({
+        depthPacking: THREE.RGBADepthPacking,
+        map: tex,
+        alphaTest: 0.4,
+      }),
+    [tex],
+  );
   return (
-    <mesh geometry={geom} rotation={[-Math.PI / 2.15, 0, 0.24]}>
+    <mesh
+      geometry={geom}
+      rotation={[-Math.PI / 2.15, 0, 0.24]}
+      castShadow
+      receiveShadow
+      customDepthMaterial={depthMat}
+    >
       <meshBasicMaterial
         map={tex}
         color="#e6d4b0"
@@ -309,6 +326,7 @@ export function BodyView3D({
       <Canvas
         key={q.tier}
         dpr={q.dpr}
+        shadows={q.contactShadows ? 'soft' : false}
         gl={{ antialias: q.antialias, powerPreference: q.powerPreference }}
         camera={{ fov: 30, position: [0, 0, dist] }}
         onCreated={({ camera }) => camera.lookAt(0, 0, 0)}
@@ -320,7 +338,21 @@ export function BodyView3D({
           <hemisphereLight args={['#6a7ab0', '#40352a', 0.45]} />
           {!isStar && (
             <>
-              <directionalLight position={[-3.2, 2.6, 3.4]} intensity={2.1} color="#fff2df" />
+              <directionalLight
+                position={[-3.2, 2.6, 3.4]}
+                intensity={2.1}
+                color="#fff2df"
+                castShadow={q.contactShadows}
+                shadow-mapSize={[1024, 1024]}
+                shadow-bias={-0.0004}
+                shadow-normalBias={0.03}
+                shadow-camera-near={0.5}
+                shadow-camera-far={14}
+                shadow-camera-left={-3.6}
+                shadow-camera-right={3.6}
+                shadow-camera-top={3.6}
+                shadow-camera-bottom={-3.6}
+              />
               {/* contre-jour doux : évite un limbe trop sombre en « portrait » */}
               <directionalLight position={[3.4, -1.2, 1.8]} intensity={0.55} color="#9fb4e0" />
             </>

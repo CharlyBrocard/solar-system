@@ -131,7 +131,7 @@ function CenterBody({
 
   return (
     <group>
-      <mesh ref={mesh} {...pointer}>
+      <mesh ref={mesh} {...pointer} castShadow={!isStar} receiveShadow={!isStar}>
         <sphereGeometry args={[radius, seg, seg]} />
         {isStar ? (
           sunShader ? (
@@ -247,6 +247,8 @@ function Pin({
     <group ref={group}>
       <mesh
         ref={mesh}
+        castShadow={revealed}
+        receiveShadow={revealed}
         onPointerOver={(e) => {
           e.stopPropagation();
           onHover(body.id);
@@ -346,8 +348,24 @@ function PlanetRings({ radius }: { radius: number }) {
     uv.needsUpdate = true;
     return g;
   }, [radius]);
+  // profondeur alpha-testée → l'ombre portée a la forme de l'anneau
+  const depthMat = useMemo(
+    () =>
+      new THREE.MeshDepthMaterial({
+        depthPacking: THREE.RGBADepthPacking,
+        map: tex,
+        alphaTest: 0.4,
+      }),
+    [tex],
+  );
   return (
-    <mesh geometry={geom} rotation={[-Math.PI / 2.25, 0, 0.26]}>
+    <mesh
+      geometry={geom}
+      rotation={[-Math.PI / 2.25, 0, 0.26]}
+      castShadow
+      receiveShadow
+      customDepthMaterial={depthMat}
+    >
       <meshBasicMaterial
         map={tex}
         color="#e6d4b0"
@@ -903,6 +921,16 @@ function Scene({
           position={[sceneRadius * 1.4, sceneRadius * 0.9, sceneRadius * 0.6]}
           intensity={1.7}
           color="#fff0da"
+          castShadow={quality.contactShadows}
+          shadow-mapSize={[1024, 1024]}
+          shadow-bias={-0.0004}
+          shadow-normalBias={sceneRadius * 0.015}
+          shadow-camera-near={sceneRadius * 0.3}
+          shadow-camera-far={sceneRadius * 3.4}
+          shadow-camera-left={-sceneRadius * 1.15}
+          shadow-camera-right={sceneRadius * 1.15}
+          shadow-camera-top={sceneRadius * 1.15}
+          shadow-camera-bottom={-sceneRadius * 1.15}
         />
       )}
       <Backdrop />
@@ -1057,6 +1085,7 @@ export function OrbitalScene3D(props: OrbitalSceneProps) {
       <Canvas
         key={quality.tier}
         dpr={quality.dpr}
+        shadows={quality.contactShadows ? 'soft' : false}
         gl={{
           antialias: quality.antialias,
           toneMappingExposure: 1.05,

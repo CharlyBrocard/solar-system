@@ -31,6 +31,8 @@ export interface QualitySettings {
   sunShader: boolean;
   /** octaves de bruit pour le shader du Soleil */
   sunOctaves: number;
+  /** ombres portées entre astres (lune ↔ planète, anneaux ↔ Saturne) */
+  contactShadows: boolean;
 }
 
 const TIERS: Record<QualityTier, QualitySettings> = {
@@ -46,6 +48,7 @@ const TIERS: Record<QualityTier, QualitySettings> = {
     normalMaps: false,
     sunShader: false,
     sunOctaves: 0,
+    contactShadows: false,
   },
   moyen: {
     tier: 'moyen',
@@ -59,6 +62,7 @@ const TIERS: Record<QualityTier, QualitySettings> = {
     normalMaps: true,
     sunShader: true,
     sunOctaves: 3,
+    contactShadows: false,
   },
   eleve: {
     tier: 'eleve',
@@ -72,6 +76,7 @@ const TIERS: Record<QualityTier, QualitySettings> = {
     normalMaps: true,
     sunShader: true,
     sunOctaves: 5,
+    contactShadows: true,
   },
 };
 
