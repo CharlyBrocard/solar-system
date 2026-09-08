@@ -18,6 +18,7 @@ const BADGES: Badge[] = [
   { id: 'thermometre', title: 'Thermomètre', hint: 'Réussis le quiz du chaud et du froid.' },
   { id: 'maitre-des-horloges', title: 'Maître des horloges', hint: 'Réussis le quiz des jours et des années.' },
   { id: 'berger-de-lunes', title: 'Berger de lunes', hint: 'Réussis le quiz des lunes.' },
+  { id: 'chasseur-de-records', title: 'Chasseur de records', hint: 'Réussis le quiz des extrêmes du système solaire.' },
   { id: 'portier-des-geantes', title: 'Portier des géantes', hint: 'Atteins Jupiter.' },
   { id: 'arpenteur-du-froid', title: 'Arpenteur du froid', hint: 'Atteins Neptune.' },
   { id: 'oeil-de-comete', title: 'Œil de comète', hint: 'Repère deux comètes dans le carnet.' },

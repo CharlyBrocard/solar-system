@@ -149,6 +149,49 @@ const QUIZZES: QuizDef[] = [
       },
     ],
   },
+  {
+    id: 'records',
+    title: 'Les records du système solaire',
+    passScore: 2,
+    questions: [
+      {
+        prompt: 'Où se dresse le plus haut volcan du système solaire ?',
+        options: [
+          { label: 'Sur la Terre', bodyId: 'terre' },
+          { label: 'Sur Mars', bodyId: 'mars' },
+          { label: 'Sur Vénus', bodyId: 'venus' },
+          { label: 'Sur Io', bodyId: 'io' },
+        ],
+        answerIndex: 1,
+        explanation:
+          'Olympus Mons, sur Mars, culmine à 22 km — presque trois fois l’Everest. Sans tectonique pour le déplacer, il a grossi pendant des millions d’années au même endroit.',
+      },
+      {
+        prompt: 'Quelle planète abrite la plus grande tempête connue ?',
+        options: [
+          { label: 'La Terre', bodyId: 'terre' },
+          { label: 'Jupiter', bodyId: 'jupiter' },
+          { label: 'Saturne', bodyId: 'saturne' },
+          { label: 'Neptune', bodyId: 'neptune' },
+        ],
+        answerIndex: 1,
+        explanation:
+          'La Grande Tache Rouge de Jupiter est un tourbillon plus large que la Terre, observé sans interruption depuis près de 200 ans.',
+      },
+      {
+        prompt: 'Où soufflent les vents les plus rapides ?',
+        options: [
+          { label: 'Sur Jupiter', bodyId: 'jupiter' },
+          { label: 'Sur Saturne', bodyId: 'saturne' },
+          { label: 'Sur Uranus', bodyId: 'uranus' },
+          { label: 'Sur Neptune', bodyId: 'neptune' },
+        ],
+        answerIndex: 3,
+        explanation:
+          'Jusqu’à 2 000 km/h sur Neptune — cinq fois plus violent que les pires ouragans terrestres, et pourtant elle ne reçoit presque pas de lumière du Soleil.',
+      },
+    ],
+  },
 ];
 
 export default QUIZZES;

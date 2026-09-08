@@ -145,6 +145,16 @@ const QUESTS: Quest[] = [
     goto: '/quiz/lunes',
   },
   {
+    id: 'quiz-records',
+    title: 'Les extrêmes du système solaire',
+    description:
+      'Une quête de savoir : trois questions sur les records — plus haut, plus grand, plus rapide.',
+    objectives: [{ id: 'quiz', kind: 'quiz', target: 'records', label: 'Réussir le quiz' }],
+    rewardBadgeId: 'chasseur-de-records',
+    requires: 'geantes',
+    goto: '/quiz/records',
+  },
+  {
     id: 'confins',
     title: 'Atteins les confins',
     description:
