@@ -83,8 +83,8 @@ function lander(hull: string, accent: string) {
   return (
     <g>
       <path d="M15 11h18l4 13-7 8H18l-7-8Z" fill={hull} />
-      <path d="M13 27 6 40M35 27l7 13M20 32l-4 9M28 32l4 9" stroke={hull} strokeWidth="3" strokeLinecap="round" />
-      <path d="M4 40h5M14 42h5M29 42h5M39 40h5" stroke={hull} strokeWidth="3.4" strokeLinecap="round" />
+      <path d="M14 29 6 41M34 29l8 12M24 32v10" stroke={hull} strokeWidth="3" strokeLinecap="round" />
+      <path d="M3 41h6M21 43h6M39 41h6" stroke={hull} strokeWidth="3.4" strokeLinecap="round" />
       <circle cx="24" cy="20" r="4.6" fill={accent} />
     </g>
   );

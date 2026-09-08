@@ -157,24 +157,38 @@ function Chasseur({ accent }: { accent: string }) {
 function Lander({ accent }: { accent: string }) {
   return (
     <group>
+      {/* corps compact */}
       <mesh>
-        <icosahedronGeometry args={[0.42, 0]} />
+        <icosahedronGeometry args={[0.28, 0]} />
         <Hull />
       </mesh>
-      <mesh position={[0, 0.06, 0.38]} rotation={[0.16, 0, 0]}>
-        <circleGeometry args={[0.14, 20]} />
+      {/* hublot */}
+      <mesh position={[0, 0.05, 0.25]} rotation={[0.16, 0, 0]}>
+        <circleGeometry args={[0.1, 20]} />
         <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.75} />
       </mesh>
-      {[0, 1, 2, 3].map((i) => {
-        const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      {/* tuyère, rentrée sous le corps pour ne pas passer pour un pied */}
+      <mesh position={[0, -0.22, 0]} rotation={[Math.PI, 0, 0]}>
+        <coneGeometry args={[0.08, 0.1, 14]} />
+        <meshStandardMaterial color={TRIM} flatShading />
+      </mesh>
+      {/* antenne */}
+      <mesh position={[0.12, 0.28, -0.04]} rotation={[0, 0, -0.3]}>
+        <cylinderGeometry args={[0.012, 0.012, 0.22, 6]} />
+        <Hull />
+      </mesh>
+      {/* trépied : 3 pieds écartés, un vers l'arrière */}
+      {[0, 1, 2].map((i) => {
+        const a = (i / 3) * Math.PI * 2 + Math.PI;
         return (
           <group key={i} rotation={[0, a, 0]}>
-            <mesh position={[0, -0.26, 0.2]} rotation={[0.66, 0, 0]}>
-              <cylinderGeometry args={[0.038, 0.038, 0.34, 8]} />
+            <mesh position={[0, -0.22, 0.16]} rotation={[0.5, 0, 0]}>
+              <cylinderGeometry args={[0.04, 0.04, 0.4, 8]} />
               <meshStandardMaterial color={HULL_DIM} flatShading />
             </mesh>
-            <mesh position={[0, -0.38, 0.3]}>
-              <boxGeometry args={[0.16, 0.05, 0.16]} />
+            {/* patin plat, posé à l'horizontale */}
+            <mesh position={[0, -0.42, 0.32]}>
+              <cylinderGeometry args={[0.12, 0.14, 0.045, 6]} />
               <meshStandardMaterial color={TRIM} flatShading />
             </mesh>
           </group>
@@ -189,7 +203,7 @@ const MODELS: { Comp: (p: { accent: string }) => ReactElement; scale: number; y:
   { Comp: Soucoupe, scale: 1.08, y: 0.06 },
   { Comp: Sonde, scale: 0.96, y: -0.04 },
   { Comp: Chasseur, scale: 1.02, y: 0 },
-  { Comp: Lander, scale: 0.94, y: 0.16 },
+  { Comp: Lander, scale: 1.04, y: 0.0 },
 ];
 
 function ShipModel({ id, reduced }: { id: number; reduced: boolean }) {
