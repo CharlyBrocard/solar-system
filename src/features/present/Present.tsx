@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { BodyHero } from '@/components/BodyHero';
 import { bodyById, codexOrder, moonsOf } from '@/data/bodies';
@@ -67,6 +67,14 @@ export function Present() {
   const readAloud = useProgress((s) => s.prefs.readAloud);
   useReadAloud(body ? `${body.name}. ${describeBody(body)}. ${blurb}` : '', readAloud);
 
+  // À chaque changement d'astre (flèches ‹/› incluses), on repose le focus sur
+  // le titre : les personnes au clavier / lecteur d'écran « entendent » le
+  // nouveau nom et gardent une position de focus cohérente.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, [id]);
+
   useEffect(() => {
     if (!body || !discovered.includes(body.id)) {
       navigate(id ? `/object/${id}` : '/codex', { replace: true });
@@ -95,7 +103,7 @@ export function Present() {
   const parentName = body.parent ? (bodyById(body.parent)?.name ?? 'sa planète') : '';
 
   return (
-    <div className={styles.screen}>
+    <div className={styles.screen} role="region" aria-label={`Mode classe — ${body.name}`}>
       <BodyHero
         className={styles.figure}
         body={body}
@@ -104,9 +112,13 @@ export function Present() {
         tint={body.type === 'star' ? '#241a3d' : '#1d1638'}
         moons={heroMoons.length ? heroMoons : undefined}
       />
-      <div className={styles.neb} />
-      <div className={styles.stars} />
-      <div className={styles.veil} />
+      <div className={styles.neb} aria-hidden />
+      <div className={styles.stars} aria-hidden />
+      <div className={styles.veil} aria-hidden />
+
+      <p className="srOnly">
+        Fiche plein écran. Flèches gauche et droite pour changer d’objet, Échap pour quitter.
+      </p>
 
       <button type="button" className={styles.quit} onClick={exitToSheet}>
         Quitter le mode classe
@@ -115,10 +127,16 @@ export function Present() {
       <div className={styles.row}>
         <div className={styles.info}>
           <div className={styles.typeRow}>
-            <span className={styles.typeDot} style={{ background: TYPE_COLOR[body.type] }} />
+            <span
+              className={styles.typeDot}
+              style={{ background: TYPE_COLOR[body.type] }}
+              aria-hidden
+            />
             {describeBody(body)}
           </div>
-          <h1 className={styles.name}>{body.name}</h1>
+          <h1 className={styles.name} ref={headingRef} tabIndex={-1}>
+            {body.name}
+          </h1>
           <p className={styles.desc}>{blurb}</p>
 
           <div className={styles.stats}>
@@ -146,13 +164,14 @@ export function Present() {
         </div>
       </div>
 
-      <div className={styles.nav}>
+      <div className={styles.nav} role="group" aria-label="Naviguer entre les objets">
         <button
           type="button"
           className={styles.navBtn}
           disabled={seenIndex === 0}
           onClick={() => goTo(seenIndex - 1)}
           aria-label="Objet précédent"
+          aria-keyshortcuts="ArrowLeft"
         >
           ‹
         </button>
@@ -162,6 +181,7 @@ export function Present() {
           disabled={seenIndex === seen.length - 1}
           onClick={() => goTo(seenIndex + 1)}
           aria-label="Objet suivant"
+          aria-keyshortcuts="ArrowRight"
         >
           ›
         </button>

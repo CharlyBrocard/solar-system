@@ -11,7 +11,12 @@ export function AppLayout() {
   usePrefsEffects();
   return (
     <>
-      <Outlet />
+      <a href="#main" className="skipLink">
+        Aller au contenu
+      </a>
+      <main id="main" tabIndex={-1}>
+        <Outlet />
+      </main>
       <DiscoveryOverlay />
       <QuestCompleteOverlay />
       <LiveAnnouncer />

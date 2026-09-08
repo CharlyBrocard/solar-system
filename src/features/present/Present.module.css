@@ -105,6 +105,13 @@
   line-height: 0.95;
 }
 
+/* le focus est déplacé ici par script (annonce lecteur d'écran au changement
+   d'astre) — ce n'est pas un contrôle, on ne montre pas de contour */
+.name:focus,
+.name:focus-visible {
+  outline: none;
+}
+
 .desc {
   margin: 0;
   font-size: clamp(17px, 2.6vw, 26px);

@@ -64,6 +64,32 @@ a {
   border: 0;
 }
 
+main:focus {
+  outline: none;
+}
+
+/* lien d'évitement : masqué jusqu'à recevoir le focus au clavier */
+.skipLink {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 1000;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-150%);
+  transition: transform 0.15s ease;
+}
+
+.skipLink:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
 .eyebrow {
   font-family: var(--font-mono);
   font-size: var(--fs-eyebrow);
