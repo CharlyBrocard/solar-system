@@ -192,6 +192,49 @@ const QUIZZES: QuizDef[] = [
       },
     ],
   },
+  {
+    id: 'eau',
+    title: 'La piste de l’eau',
+    passScore: 2,
+    questions: [
+      {
+        prompt: 'Quel monde cacherait sous sa glace un océan plus vaste que tous ceux de la Terre ?',
+        options: [
+          { label: 'La Lune', bodyId: 'lune' },
+          { label: 'Europe', bodyId: 'europe' },
+          { label: 'Titan', bodyId: 'titan' },
+          { label: 'Mars', bodyId: 'mars' },
+        ],
+        answerIndex: 1,
+        explanation:
+          'Europe, lune de Jupiter : sous 15 à 25 km de glace, un océan salé qui contiendrait deux fois plus d’eau que la Terre.',
+      },
+      {
+        prompt: 'D’où jaillissent des geysers d’eau salée observés par la sonde Cassini ?',
+        options: [
+          { label: 'Io', bodyId: 'io' },
+          { label: 'Encelade', bodyId: 'encelade' },
+          { label: 'Callisto', bodyId: 'callisto' },
+          { label: 'Ganymède', bodyId: 'ganymede' },
+        ],
+        answerIndex: 1,
+        explanation:
+          'Encelade, petite lune de Saturne : ses panaches viennent d’un océan caché, et Cassini y a même détecté des molécules organiques.',
+      },
+      {
+        prompt: 'Qu’a-t-on découvert à la surface de Mars qui prouve un passé humide ?',
+        options: [
+          { label: 'Des océans encore liquides' },
+          { label: 'Des lits de rivières asséchés' },
+          { label: 'Des chutes de neige quotidiennes' },
+          { label: 'Des glaciers à l’équateur' },
+        ],
+        answerIndex: 1,
+        explanation:
+          'Vallées, deltas et galets arrondis : il y a des milliards d’années, de l’eau liquide a coulé sur Mars. Il n’en reste aujourd’hui que de la glace aux pôles et sous le sol.',
+      },
+    ],
+  },
 ];
 
 export default QUIZZES;

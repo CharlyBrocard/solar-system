@@ -108,6 +108,36 @@ const QUESTS: Quest[] = [
     goto: '/object/uranus',
   },
   {
+    id: 'mondes-qui-crachent',
+    title: 'Les mondes qui crachent',
+    description:
+      "Volcans de soufre, geysers de glace, jets d’azote : certains astres sont bien vivants sous leur surface. Retrouves-en trois.",
+    objectives: [
+      {
+        id: 'actifs',
+        kind: 'visit-any',
+        targets: ['io', 'encelade', 'triton'],
+        count: 3,
+        label: 'Découvrir Io, Encelade et Triton',
+      },
+    ],
+    rewardBadgeId: 'guetteur-de-panaches',
+    requires: 'externe',
+    goto: '/zone/jupiter',
+  },
+  {
+    id: 'visiteur-interstellaire',
+    title: 'Le visiteur d’un autre système',
+    description:
+      "En 2017, un objet venu d’une autre étoile a traversé le système solaire à toute vitesse, sans jamais s’arrêter. Retrouve ʻOumuamua dans le carnet.",
+    objectives: [
+      { id: 'oumuamua', kind: 'visit', target: 'oumuamua', label: 'Découvrir ʻOumuamua' },
+    ],
+    rewardBadgeId: 'oreille-interstellaire',
+    requires: 'externe',
+    goto: '/codex',
+  },
+  {
     id: 'compare-mondes',
     title: 'Compare deux mondes',
     description:
@@ -153,6 +183,16 @@ const QUESTS: Quest[] = [
     rewardBadgeId: 'chasseur-de-records',
     requires: 'geantes',
     goto: '/quiz/records',
+  },
+  {
+    id: 'quiz-eau',
+    title: 'Suis la piste de l’eau',
+    description:
+      'Une quête de savoir : trois questions sur l’eau, ici et ailleurs dans le système solaire.',
+    objectives: [{ id: 'quiz', kind: 'quiz', target: 'eau', label: 'Réussir le quiz' }],
+    rewardBadgeId: 'sourcier-de-l-espace',
+    requires: 'geantes',
+    goto: '/quiz/eau',
   },
   {
     id: 'confins',
