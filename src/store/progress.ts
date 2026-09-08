@@ -37,6 +37,11 @@ export interface ProgressState {
   pendingBadges: string[];
   /** File des quêtes qui viennent d'être accomplies : célébrées une à une. */
   pendingQuestCompletions: string[];
+  /**
+   * Plafond de qualité imposé à la volée quand le mode « Auto » détecte une
+   * scène qui rame. Transitoire : recalculé à chaque session.
+   */
+  perfTierCap: 'bas' | 'moyen' | 'eleve' | null;
 
   // --- actions ---
   startGame: (name: string, avatarId: number) => void;
@@ -52,6 +57,7 @@ export interface ProgressState {
   toggleRealScale: () => void;
   setRealScale: (on: boolean) => void;
   setPref: <K extends keyof Prefs>(key: K, value: Prefs[K]) => void;
+  setPerfTierCap: (tier: 'bas' | 'moyen' | 'eleve') => void;
   reset: () => void;
 }
 
@@ -91,6 +97,7 @@ const initialState = {
   pendingDiscovery: null as string | null,
   pendingBadges: [] as string[],
   pendingQuestCompletions: [] as string[],
+  perfTierCap: null as 'bas' | 'moyen' | 'eleve' | null,
 };
 
 export const useProgress = create<ProgressState>()(
@@ -166,6 +173,9 @@ export const useProgress = create<ProgressState>()(
       setPref: (key, value) =>
         set((s) => ({ prefs: { ...s.prefs, [key]: value } })),
 
+      setPerfTierCap: (tier) =>
+        set((s) => (s.perfTierCap === tier ? s : { perfTierCap: tier })),
+
       reset: () => set(initialState),
     }),
     {
@@ -177,6 +187,7 @@ export const useProgress = create<ProgressState>()(
         pendingBadges: _pb,
         pendingQuestCompletions: _pq,
         realScaleMode: _rs,
+        perfTierCap: _ptc,
         ...rest
       }) => rest,
       migrate: (persisted, from) => {

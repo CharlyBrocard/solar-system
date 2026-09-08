@@ -36,8 +36,49 @@ import {
   SIZE_SCALE,
   worldRadius,
 } from './scene3d';
-import { useQuality, type QualitySettings } from './quality';
+import { useQuality, type QualitySettings, type QualityTier } from './quality';
+import { useProgress } from '@/store/progress';
 import styles from './OrbitalScene3D.module.css';
+
+// une seule fois par session : le mode « Auto » qui a détecté une scène qui rame
+let perfProbed = false;
+
+/**
+ * Sonde de performance : sur les ~4 premières secondes de scène, si le mode est
+ * « Auto » et que ça rame (framerate moyen bas ou beaucoup de frames lentes),
+ * on descend d'un palier de qualité. Ne remonte jamais, une fois par session.
+ */
+function PerfProbe({ tier }: { tier: QualityTier }) {
+  const graphics = useProgress((s) => s.prefs?.graphics);
+  const setCap = useProgress((s) => s.setPerfTierCap);
+  const acc = useRef({ frames: 0, time: 0, slow: 0 });
+
+  useFrame((_, dt) => {
+    if (perfProbed || graphics !== 'auto' || tier === 'bas') return;
+    const a = acc.current;
+    // on ignore la première demi-seconde (montage + compilation des shaders)
+    if (a.time < 0.5) {
+      a.time += dt;
+      return;
+    }
+    a.frames += 1;
+    a.time += dt;
+    if (dt > 1 / 45) a.slow += 1;
+
+    if ((a.time >= 4.5 && a.frames >= 8) || a.time >= 9) {
+      perfProbed = true;
+      const avgFps = a.frames / Math.max(0.1, a.time - 0.5);
+      const slowRatio = a.slow / a.frames;
+      if (import.meta.env.DEV)
+        console.info('[perf]', { tier, avgFps: Math.round(avgFps), slowRatio: +slowRatio.toFixed(2) });
+      if (avgFps < 45 || slowRatio > 0.35) {
+        setCap(tier === 'eleve' ? 'moyen' : 'bas');
+      }
+    }
+  });
+
+  return null;
+}
 
 type OrbitControlsRef = ComponentRef<typeof OrbitControls>;
 type DriftRef = MutableRefObject<number>;
@@ -913,6 +954,7 @@ function Scene({
         attach="fog"
         args={['#0e0b22', sceneRadius * 2, sceneRadius * 5]}
       />
+      <PerfProbe tier={quality.tier} />
       <ambientLight intensity={centerIsStar ? 0.42 : 0.5} />
       <hemisphereLight args={['#4a5a8f', '#3a2a1e', 0.3]} />
       {/* sous-carte (pas d'étoile au centre) : lumière-clé venue du « Soleil » */}

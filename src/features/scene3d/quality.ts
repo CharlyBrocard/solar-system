@@ -93,22 +93,33 @@ export function detectTier(): QualityTier {
   const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
   let score = 0;
-  score += cores >= 8 ? 2 : cores >= 4 ? 1 : 0;
+  score += cores >= 12 ? 3 : cores >= 8 ? 2 : cores >= 4 ? 1 : 0;
   score += mem >= 8 ? 2 : mem >= 4 ? 1 : 0;
   score += mobile ? 0 : 1;
 
   detected = score >= 4 ? 'eleve' : score >= 2 ? 'moyen' : 'bas';
+  // même un mobile haut de gamme peine avec bloom + ombres + 3400 étoiles :
+  // on plafonne la détection à « moyen » (la sonde perf peut encore descendre).
+  if (mobile && detected === 'eleve') detected = 'moyen';
   return detected;
 }
 
-export function resolveQuality(pref: GraphicsPref | undefined): QualitySettings {
-  const tier: QualityTier =
+const RANK: Record<QualityTier, number> = { bas: 0, moyen: 1, eleve: 2 };
+
+export function resolveQuality(
+  pref: GraphicsPref | undefined,
+  cap?: QualityTier | null,
+): QualitySettings {
+  let tier: QualityTier =
     pref === 'bas' || pref === 'moyen' || pref === 'eleve' ? pref : detectTier();
+  // le plafond « perf » (mode Auto seulement) ne peut que descendre le palier
+  if (cap && RANK[cap] < RANK[tier]) tier = cap;
   return TIERS[tier];
 }
 
-/** Réglages de qualité effectifs (résout `auto` selon l'appareil). */
+/** Réglages de qualité effectifs (résout `auto`, applique le plafond perf). */
 export function useQuality(): QualitySettings {
   const pref = useProgress((s) => s.prefs?.graphics);
-  return useMemo(() => resolveQuality(pref), [pref]);
+  const cap = useProgress((s) => s.perfTierCap);
+  return useMemo(() => resolveQuality(pref, cap), [pref, cap]);
 }
