@@ -96,6 +96,18 @@ const QUESTS: Quest[] = [
     goto: '/zone/saturne',
   },
   {
+    id: 'planete-couchee',
+    title: 'La planète couchée',
+    description:
+      "Uranus ne tourne pas comme les autres : son axe est presque allongé dans le plan de son orbite. Va voir cette géante qui roule sur le côté.",
+    objectives: [
+      { id: 'uranus', kind: 'visit', target: 'uranus', label: 'Découvrir Uranus' },
+    ],
+    rewardBadgeId: 'toupie-renversee',
+    requires: 'geantes',
+    goto: '/object/uranus',
+  },
+  {
     id: 'compare-mondes',
     title: 'Compare deux mondes',
     description:
@@ -114,6 +126,25 @@ const QUESTS: Quest[] = [
     goto: '/quiz/froid',
   },
   {
+    id: 'quiz-mouvement',
+    title: 'Jours, années et rotations',
+    description:
+      'Une quête de savoir : trois questions sur la façon dont les astres tournent.',
+    objectives: [{ id: 'quiz', kind: 'quiz', target: 'mouvement', label: 'Réussir le quiz' }],
+    rewardBadgeId: 'maitre-des-horloges',
+    goto: '/quiz/mouvement',
+  },
+  {
+    id: 'quiz-lunes',
+    title: 'Le bal des lunes',
+    description:
+      'Une quête de savoir : trois questions sur les lunes du système solaire.',
+    objectives: [{ id: 'quiz', kind: 'quiz', target: 'lunes', label: 'Réussir le quiz' }],
+    rewardBadgeId: 'berger-de-lunes',
+    requires: 'geantes',
+    goto: '/quiz/lunes',
+  },
+  {
     id: 'confins',
     title: 'Atteins les confins',
     description:
@@ -125,6 +156,42 @@ const QUESTS: Quest[] = [
     rewardBadgeId: 'sentinelle-des-confins',
     requires: 'externe',
     goto: '/map',
+  },
+  {
+    id: 'chasseur-de-cometes',
+    title: 'À l’affût des comètes',
+    description:
+      "Boules de glace et de poussière, les comètes plongent vers le Soleil, s’allument, puis repartent pour des siècles. Repères-en deux dans le carnet.",
+    objectives: [
+      {
+        id: 'cometes',
+        kind: 'visit-any',
+        targets: ['halley', 'tchouri', 'hale-bopp'],
+        count: 2,
+        label: '2 comètes découvertes',
+      },
+    ],
+    rewardBadgeId: 'oeil-de-comete',
+    requires: 'externe',
+    goto: '/codex',
+  },
+  {
+    id: 'les-voyageuses',
+    title: 'Les deux Voyageuses',
+    description:
+      "Lancées en 1977, Voyager 1 et 2 ont dépassé toutes les planètes et voguent aujourd’hui entre les étoiles. Retrouve les deux sondes.",
+    objectives: [
+      {
+        id: 'voyagers',
+        kind: 'visit-any',
+        targets: ['voyager-1', 'voyager-2'],
+        count: 2,
+        label: 'Voyager 1 et Voyager 2 découvertes',
+      },
+    ],
+    rewardBadgeId: 'cap-sur-les-etoiles',
+    requires: 'externe',
+    goto: '/codex',
   },
 ];
 

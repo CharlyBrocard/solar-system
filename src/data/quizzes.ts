@@ -63,6 +63,92 @@ const QUIZZES: QuizDef[] = [
       },
     ],
   },
+  {
+    id: 'mouvement',
+    title: 'Jours et années',
+    passScore: 2,
+    questions: [
+      {
+        prompt: 'Sur quelle planète un jour dure-t-il plus longtemps qu’une année ?',
+        options: [
+          { label: 'Mercure', bodyId: 'mercure' },
+          { label: 'Vénus', bodyId: 'venus' },
+          { label: 'Mars', bodyId: 'mars' },
+          { label: 'Jupiter', bodyId: 'jupiter' },
+        ],
+        answerIndex: 1,
+        explanation:
+          'Vénus tourne sur elle-même si lentement — et à l’envers — qu’un de ses jours (243 jours terrestres) dépasse son année (225 jours).',
+      },
+      {
+        prompt: 'Combien de temps la Lune met-elle à tourner sur elle-même ?',
+        options: [
+          { label: '24 heures' },
+          { label: '27 jours, le temps d’un tour de la Terre' },
+          { label: 'Elle ne tourne pas du tout' },
+          { label: 'Un an' },
+        ],
+        answerIndex: 1,
+        explanation:
+          'Sa rotation dure exactement le temps de son orbite : elle nous montre donc toujours la même face. On appelle ça le verrouillage par les marées.',
+      },
+      {
+        prompt: 'Quelle planète boucle un tour sur elle-même en moins de 10 heures ?',
+        options: [
+          { label: 'La Terre', bodyId: 'terre' },
+          { label: 'Mars', bodyId: 'mars' },
+          { label: 'Jupiter', bodyId: 'jupiter' },
+          { label: 'Neptune', bodyId: 'neptune' },
+        ],
+        answerIndex: 2,
+        explanation:
+          'Malgré sa taille, Jupiter tourne en 9 h 56 : c’est le jour le plus court du système solaire, et ça aplatit visiblement ses pôles.',
+      },
+    ],
+  },
+  {
+    id: 'lunes',
+    title: 'Un monde de lunes',
+    passScore: 2,
+    questions: [
+      {
+        prompt: 'Quelle est la plus grande lune du système solaire ?',
+        options: [
+          { label: 'La Lune', bodyId: 'lune' },
+          { label: 'Titan', bodyId: 'titan' },
+          { label: 'Ganymède', bodyId: 'ganymede' },
+          { label: 'Io', bodyId: 'io' },
+        ],
+        answerIndex: 2,
+        explanation:
+          'Ganymède, lune de Jupiter, est même plus grosse que la planète Mercure — et c’est la seule lune connue avec son propre champ magnétique.',
+      },
+      {
+        prompt: 'Quelle planète compte le plus de lunes ?',
+        options: [
+          { label: 'Jupiter', bodyId: 'jupiter' },
+          { label: 'Saturne', bodyId: 'saturne' },
+          { label: 'Uranus', bodyId: 'uranus' },
+          { label: 'Neptune', bodyId: 'neptune' },
+        ],
+        answerIndex: 1,
+        explanation:
+          'Saturne en dénombre près de 150, repassant devant Jupiter (95). La plupart sont de petits blocs de glace de quelques kilomètres.',
+      },
+      {
+        prompt: 'Sur quelle lune pleut-il du méthane liquide ?',
+        options: [
+          { label: 'Europe', bodyId: 'europe' },
+          { label: 'Titan', bodyId: 'titan' },
+          { label: 'Encelade', bodyId: 'encelade' },
+          { label: 'Triton', bodyId: 'triton' },
+        ],
+        answerIndex: 1,
+        explanation:
+          'Titan a une atmosphère épaisse et un vrai cycle météo : du méthane s’évapore, forme des nuages, retombe en pluie et remplit des lacs.',
+      },
+    ],
+  },
 ];
 
 export default QUIZZES;
