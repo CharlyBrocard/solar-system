@@ -5,6 +5,7 @@ import type { Body, Zone } from '@/data/types';
 import { ZONE_META } from '@/data/zones';
 import { useProgress, ZONE_ORDER } from '@/store/progress';
 import { unlockedZones } from '@/store/selectors';
+import { sfx } from '@/lib/sfx';
 import { RINGS } from './rings';
 import { ringColor } from '@/features/scene/types';
 import type { OrbitalSceneProps, ScenePin } from '@/features/scene/types';
@@ -101,6 +102,7 @@ export function SystemView() {
       setSealedZone(body.zone);
       return;
     }
+    sfx.play('dive');
     setDiveTo(body.id);
   };
 

@@ -13,6 +13,7 @@ export interface Prefs {
   readAloud: boolean;
   simplified: boolean;
   ambientSound: boolean;
+  soundEffects: boolean;
   graphics: GraphicsPref;
 }
 
@@ -84,6 +85,7 @@ const initialState = {
     readAloud: false,
     simplified: false,
     ambientSound: false,
+    soundEffects: false,
     graphics: 'auto',
   } as Prefs,
   pendingDiscovery: null as string | null,
@@ -185,6 +187,7 @@ export const useProgress = create<ProgressState>()(
             readAloud: false,
             simplified: false,
             ambientSound: false,
+            soundEffects: false,
             graphics: 'auto',
             ...(p.prefs ?? {}),
           } as Prefs,

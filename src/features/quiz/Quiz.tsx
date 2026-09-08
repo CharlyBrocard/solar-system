@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { BodySphere } from '@/components/BodySphere';
 import { bodyById } from '@/data/bodies';
 import { quizById } from '@/data/quizzes';
+import { sfx } from '@/lib/sfx';
 import { useProgress } from '@/store/progress';
 import styles from './Quiz.module.css';
 
@@ -34,6 +35,7 @@ export function Quiz() {
     if (answered) return;
     setSelected(i);
     setResults((r) => [...r, i === question.answerIndex]);
+    sfx.play(i === question.answerIndex ? 'correct' : 'wrong');
   };
 
   const next = () => {

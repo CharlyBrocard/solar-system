@@ -9,21 +9,24 @@ import { currentLevel, POINTS_PER_LEVEL, useProgress } from '@/store/progress';
 import type { GraphicsPref } from '@/store/progress';
 import { unlockedZones } from '@/store/selectors';
 import { ambient } from '@/lib/ambient';
+import { sfx } from '@/lib/sfx';
 import { speak } from '@/lib/speech';
 import styles from './Profile.module.css';
 
-type BoolPref = 'readAloud' | 'simplified' | 'ambientSound';
+type BoolPref = 'readAloud' | 'simplified' | 'ambientSound' | 'soundEffects';
 
 const PREF_LABELS: Record<BoolPref, string> = {
   readAloud: 'Lecture des textes à voix haute',
   simplified: 'Mode simplifié (8-10 ans)',
   ambientSound: 'Ambiance sonore',
+  soundEffects: 'Effets sonores',
 };
 
 const PREF_HINTS: Record<BoolPref, string> = {
   readAloud: 'Chaque fiche est lue automatiquement quand tu l’ouvres.',
   simplified: 'Textes plus gros, aérés, et on masque les détails techniques.',
   ambientSound: 'Une nappe sonore très douce en fond d’exploration.',
+  soundEffects: 'De petits sons pour les découvertes, les plongées et les quêtes.',
 };
 
 const GRAPHICS_OPTIONS: { value: GraphicsPref; label: string }[] = [
@@ -160,6 +163,10 @@ export function Profile() {
                     setPref(key, next);
                     // effets qui doivent partir dans le geste de l'utilisateur
                     if (key === 'ambientSound') ambient.setEnabled(next);
+                    if (key === 'soundEffects') {
+                      sfx.setEnabled(next);
+                      if (next) sfx.play('correct');
+                    }
                     if (key === 'readAloud' && next) {
                       speak('La lecture à voix haute est activée.');
                     }

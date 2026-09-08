@@ -6,6 +6,7 @@ import { ZONE_META } from '@/data/zones';
 import { useProgress } from '@/store/progress';
 import { useBlurb } from '@/store/useBlurb';
 import { unlockedZones } from '@/store/selectors';
+import { sfx } from '@/lib/sfx';
 import { ringColor } from '@/features/scene/types';
 import type { OrbitalSceneProps, ScenePin } from '@/features/scene/types';
 import styles from './ZoneView.module.css';
@@ -126,7 +127,10 @@ export function ZoneView() {
   const centerSize = config.isBelt ? 64 : clamp(center.size * 2.4, 96, 176);
 
   const handleSelect = (body: Body) => {
-    if (!diveTo) setDiveTo(body.id);
+    if (!diveTo) {
+      sfx.play('dive');
+      setDiveTo(body.id);
+    }
   };
 
   const finishDive = (bid: string) => {
