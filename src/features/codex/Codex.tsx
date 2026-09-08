@@ -62,7 +62,7 @@ export function Codex() {
               </div>
               <div className={styles.totalKey}>objets découverts</div>
             </div>
-            <div className={styles.totalBar}>
+            <div className={styles.totalBar} aria-hidden>
               <div className={styles.totalFill} style={{ width: `${pct}%` }} />
             </div>
           </div>
@@ -74,8 +74,11 @@ export function Codex() {
             return (
               <section key={section.key} className={styles.section}>
                 <div className={styles.sectionHead}>
-                  <span className={styles.sectionName}>{section.label}</span>
-                  <div className={styles.sectionTrack}>
+                  <h2 className={styles.sectionName}>{section.label}</h2>
+                  <div
+                    className={styles.sectionTrack}
+                    aria-hidden
+                  >
                     <div
                       className={styles.sectionProgress}
                       style={{
@@ -85,7 +88,7 @@ export function Codex() {
                     />
                   </div>
                   <span className={styles.sectionCount}>
-                    {found}/{section.bodies.length}
+                    {found}/{section.bodies.length} découverts
                   </span>
                 </div>
 
@@ -96,27 +99,33 @@ export function Codex() {
                     const zoneOpen = unlocked.has(body.zone);
 
                     if (!isFound) {
+                      const state = zoneOpen ? 'Pas encore découvert' : 'Zone scellée';
                       return (
                         <div
                           key={body.id}
                           className={styles.tile}
                           data-locked="true"
-                          title={zoneOpen ? 'Pas encore découvert' : 'Zone scellée'}
+                          role="img"
+                          aria-label={`Objet non identifié — ${state}`}
                         >
-                          <div className={styles.lockDisc}>
+                          <div className={styles.lockDisc} aria-hidden>
                             <span className={styles.lockIcon} />
                           </div>
-                          <span className={styles.tileUnknown}>? ? ?</span>
+                          <span className={styles.tileUnknown} aria-hidden>
+                            ? ? ?
+                          </span>
                         </div>
                       );
                     }
 
+                    const isLast = body.id === lastDiscovered;
                     return (
                       <Link
                         key={body.id}
                         to={`/object/${body.id}`}
                         className={styles.tile}
-                        data-current={body.id === lastDiscovered ? 'true' : undefined}
+                        data-current={isLast ? 'true' : undefined}
+                        aria-label={`${body.name} — ouvrir la fiche${isLast ? ' (dernière découverte)' : ''}`}
                       >
                         <BodySphere body={body} size={46} />
                         <span className={styles.tileName}>{body.name}</span>

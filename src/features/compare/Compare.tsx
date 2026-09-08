@@ -5,6 +5,7 @@ import BODIES, { TYPE_LABEL, bodyById } from '@/data/bodies';
 import type { Body } from '@/data/types';
 import { fmtDiameter, fmtGravity, fmtYear } from '@/data/format';
 import { useProgress } from '@/store/progress';
+import { useDialog } from '@/lib/useDialog';
 import styles from './Compare.module.css';
 
 interface Metric {
@@ -80,6 +81,7 @@ export function Compare() {
   const b = bodyById(bId);
 
   const [picking, setPicking] = useState<'a' | 'b' | null>(null);
+  const pickerRef = useDialog<HTMLDivElement>(() => setPicking(null), picking !== null);
 
   // On valide la quête « comparateur » quand l'enfant choisit lui-même un astre,
   // pas au simple chargement de la page (les côtés ont une valeur par défaut).
@@ -134,8 +136,12 @@ export function Compare() {
                 const vb = m.value(b);
                 const max = Math.max(va, vb, 1);
                 return (
-                  <div key={m.key}>
-                    <div className={styles.row}>
+                  <div
+                    key={m.key}
+                    role="group"
+                    aria-label={`${m.label} — ${a.name} : ${m.format(a)}, ${b.name} : ${m.format(b)}`}
+                  >
+                    <div className={styles.row} aria-hidden>
                       <div className={styles.barWrapL}>
                         <span
                           className={styles.bar}
@@ -152,7 +158,7 @@ export function Compare() {
                         />
                       </div>
                     </div>
-                    <div className={styles.vals}>
+                    <div className={styles.vals} aria-hidden>
                       <span className={styles.valL}>{m.format(a)}</span>
                       <span />
                       <span>{m.format(b)}</span>
@@ -162,8 +168,8 @@ export function Compare() {
               })}
             </div>
 
-            <div className={styles.blurb}>
-              <span className={styles.blurbIcon} />
+            <div className={styles.blurb} role="status" aria-live="polite">
+              <span className={styles.blurbIcon} aria-hidden />
               <span className={styles.blurbText}>{blurbFor(a, b)}</span>
             </div>
           </>
@@ -171,7 +177,14 @@ export function Compare() {
       </div>
 
       {picking && (
-        <div className={styles.overlay} onClick={() => setPicking(null)}>
+        <div
+          ref={pickerRef}
+          className={styles.overlay}
+          onClick={() => setPicking(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Choisir ${picking === 'a' ? 'le premier' : 'le second'} objet`}
+        >
           <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
             <div className={styles.panelHead}>
               <span className={styles.panelTitle}>
@@ -187,20 +200,22 @@ export function Compare() {
               </button>
             </div>
             <div className={styles.grid}>
-              {known.map((body) => (
-                <button
-                  key={body.id}
-                  type="button"
-                  className={styles.tile}
-                  data-current={
-                    body.id === (picking === 'a' ? aId : bId) ? 'true' : undefined
-                  }
-                  onClick={() => setSide(picking, body.id)}
-                >
-                  <BodySphere body={body} size={42} />
-                  <span className={styles.tileName}>{body.name}</span>
-                </button>
-              ))}
+              {known.map((body) => {
+                const current = body.id === (picking === 'a' ? aId : bId);
+                return (
+                  <button
+                    key={body.id}
+                    type="button"
+                    className={styles.tile}
+                    data-current={current ? 'true' : undefined}
+                    aria-pressed={current}
+                    onClick={() => setSide(picking, body.id)}
+                  >
+                    <BodySphere body={body} size={42} />
+                    <span className={styles.tileName}>{body.name}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -224,7 +239,17 @@ function BodyPick({
     ? Math.max(44, Math.min(160, 160 * Math.pow(body.facts.diameterKm / maxD, 0.72)))
     : 0;
   return (
-    <button type="button" className={styles.pick} data-side={side} onClick={onClick}>
+    <button
+      type="button"
+      className={styles.pick}
+      data-side={side}
+      onClick={onClick}
+      aria-label={
+        body
+          ? `${body.name}, ${TYPE_LABEL[body.type].toLowerCase()} — changer cet objet`
+          : 'Choisir un objet à comparer'
+      }
+    >
       {body ? (
         <>
           <BodySphere body={body} size={d} />
