@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BodyHero } from '@/components/BodyHero';
 import { bodyById, TOTAL_BODIES } from '@/data/bodies';
 import { badgeById } from '@/data/badges';
 import { useProgress } from '@/store/progress';
 import { useBlurb } from '@/store/useBlurb';
+import { useDialog } from '@/lib/useDialog';
 import styles from './DiscoveryOverlay.module.css';
 
 /**
@@ -21,15 +21,7 @@ export function DiscoveryOverlay() {
 
   const body = bodyById(pendingDiscovery ?? undefined);
   const blurb = useBlurb(body);
-
-  useEffect(() => {
-    if (!body) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') dismiss();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [body, dismiss]);
+  const dialogRef = useDialog<HTMLDivElement>(dismiss, !!body);
 
   if (!body) return null;
 
@@ -37,6 +29,7 @@ export function DiscoveryOverlay() {
 
   return (
     <div
+      ref={dialogRef}
       className={styles.overlay}
       role="dialog"
       aria-modal="true"

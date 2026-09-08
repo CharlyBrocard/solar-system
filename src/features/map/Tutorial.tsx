@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useProgress } from '@/store/progress';
 import styles from './MapOverlays.module.css';
 
@@ -23,13 +23,22 @@ export function Tutorial() {
   const markSeen = useProgress((s) => s.markTutorialSeen);
   const [step, setStep] = useState(0);
 
+  useEffect(() => {
+    if (seen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') markSeen();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [seen, markSeen]);
+
   if (seen) return null;
 
   const tip = TIPS[step];
   const last = step === TIPS.length - 1;
 
   return (
-    <div className={styles.tip}>
+    <div className={styles.tip} role="region" aria-label="Tutoriel de la carte">
       <span className={styles.tipStep}>
         Astuce {step + 1}/{TIPS.length}
       </span>

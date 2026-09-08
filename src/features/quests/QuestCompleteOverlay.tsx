@@ -1,8 +1,9 @@
-import { useEffect, type CSSProperties } from 'react';
+import { type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { badgeById } from '@/data/badges';
 import { questById } from '@/data/quests';
 import { POINTS_PER_QUEST, useProgress } from '@/store/progress';
+import { useDialog } from '@/lib/useDialog';
 import styles from './QuestCompleteOverlay.module.css';
 
 /**
@@ -25,15 +26,7 @@ export function QuestCompleteOverlay() {
   // Une découverte notable peut à la fois révéler un objet et clore une quête :
   // on laisse d'abord passer l'overlay `3e`, la célébration s'affiche ensuite.
   const quest = pendingDiscovery ? undefined : questById(pendingId);
-
-  useEffect(() => {
-    if (!quest) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') dismiss();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [quest, dismiss]);
+  const dialogRef = useDialog<HTMLDivElement>(dismiss, !!quest);
 
   if (!quest) return null;
 
@@ -41,6 +34,7 @@ export function QuestCompleteOverlay() {
 
   return (
     <div
+      ref={dialogRef}
       className={styles.overlay}
       role="dialog"
       aria-modal="true"

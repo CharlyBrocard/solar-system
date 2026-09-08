@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { DiscoveryOverlay } from '@/features/discovery/DiscoveryOverlay';
 import { QuestCompleteOverlay } from '@/features/quests/QuestCompleteOverlay';
+import { LiveAnnouncer } from '@/components/LiveAnnouncer';
 import { useQuestCompletion } from '@/store/useQuestCompletion';
 import { usePrefsEffects } from '@/store/usePrefsEffects';
 
@@ -13,6 +14,7 @@ export function AppLayout() {
       <Outlet />
       <DiscoveryOverlay />
       <QuestCompleteOverlay />
+      <LiveAnnouncer />
     </>
   );
 }

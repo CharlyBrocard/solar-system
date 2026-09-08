@@ -14,11 +14,18 @@ export function SealedZoneCard({ zone, onClose }: { zone: Zone; onClose: () => v
 
   useEffect(() => {
     const t = window.setTimeout(onClose, 6000);
-    return () => window.clearTimeout(t);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener('keydown', onKey);
+    };
   }, [onClose]);
 
   return (
-    <div className={styles.sealed}>
+    <div className={styles.sealed} role="status" aria-live="polite">
       <div className={styles.sealedIcon}>
         <span className={styles.lockGlyph} />
       </div>

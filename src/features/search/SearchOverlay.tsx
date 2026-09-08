@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BodySphere } from '@/components/BodySphere';
 import BODIES_ALL, { bodyById, TYPE_LABEL } from '@/data/bodies';
@@ -6,6 +6,7 @@ import type { Body, BodyType } from '@/data/types';
 import { questById } from '@/data/quests';
 import { useProgress } from '@/store/progress';
 import { unlockedZones } from '@/store/selectors';
+import { useDialog } from '@/lib/useDialog';
 import styles from './SearchOverlay.module.css';
 
 const norm = (s: string) =>
@@ -49,13 +50,7 @@ export function SearchOverlay({ onClose }: { onClose: () => void }) {
     }).slice(0, 40);
   }, [q, discovered, unlocked, types]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  const dialogRef = useDialog<HTMLDivElement>(onClose);
 
   const toggleType = (t: BodyType) =>
     setTypes((prev) => {
@@ -76,7 +71,14 @@ export function SearchOverlay({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
+    <div
+      ref={dialogRef}
+      className={styles.overlay}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Recherche d'un astre"
+    >
       <div className={styles.sheet} onClick={(e) => e.stopPropagation()}>
         <div className={styles.field}>
           <span className={styles.fieldIcon} />

@@ -9,6 +9,7 @@ import { sfx } from '@/lib/sfx';
 import { RINGS } from './rings';
 import { ringColor } from '@/features/scene/types';
 import type { OrbitalSceneProps, ScenePin } from '@/features/scene/types';
+import { SceneA11yNav } from '@/features/scene/SceneA11yNav';
 import { ActiveQuestCard } from '@/features/quests/ActiveQuestCard';
 import { SearchOverlay } from '@/features/search/SearchOverlay';
 import { Hud } from './Hud';
@@ -174,6 +175,30 @@ export function SystemView() {
 
   const sceneChildren = (
     <>
+      <SceneA11yNav
+        label="Astres du système solaire"
+        hint="Astres atteignables — Entrée pour ouvrir une fiche"
+        items={[
+          { id: 'soleil', label: sun.name, tag: 'centre', onSelect: () => handleSelect(sun) },
+          ...pins
+            .filter((p) => p.revealed)
+            .map((p) => ({
+              id: p.body.id,
+              label: p.body.name,
+              tag: p.discovered ? undefined : 'à découvrir',
+              onSelect: () => handleSelect(p.body),
+            })),
+          ...(unlocked.has('ceinture')
+            ? [
+                {
+                  id: 'ceinture',
+                  label: "Ceinture d'astéroïdes",
+                  onSelect: handleBelt,
+                },
+              ]
+            : []),
+        ]}
+      />
       <ActiveQuestCard />
       <Tutorial />
       {sealedZone && (

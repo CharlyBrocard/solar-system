@@ -8,6 +8,7 @@ import { useBlurb } from '@/store/useBlurb';
 import { unlockedZones } from '@/store/selectors';
 import { sfx } from '@/lib/sfx';
 import { ringColor } from '@/features/scene/types';
+import { SceneA11yNav } from '@/features/scene/SceneA11yNav';
 import type { OrbitalSceneProps, ScenePin } from '@/features/scene/types';
 import styles from './ZoneView.module.css';
 
@@ -161,6 +162,19 @@ export function ZoneView() {
 
   const sceneChildren = (
     <>
+      <SceneA11yNav
+        label={config.isBelt ? "Corps de la ceinture d'astéroïdes" : `Sous-système de ${center.name}`}
+        hint="Astres atteignables — Entrée pour ouvrir une fiche"
+        items={[
+          { id: center.id, label: center.name, tag: 'centre', onSelect: () => handleSelect(center) },
+          ...pins.map((p) => ({
+            id: p.body.id,
+            label: p.body.name,
+            tag: p.discovered ? undefined : 'à découvrir',
+            onSelect: () => handleSelect(p.body),
+          })),
+        ]}
+      />
       <div className={styles.breadcrumb}>
         <span className={styles.crumbRoot}>Système solaire</span>
         {!config.isBelt && (
