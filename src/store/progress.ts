@@ -42,6 +42,12 @@ export interface ProgressState {
    * scène qui rame. Transitoire : recalculé à chaque session.
    */
   perfTierCap: 'bas' | 'moyen' | 'eleve' | null;
+  /**
+   * Dernier astre où le vaisseau de l'explorateur s'est posé : point de
+   * départ du prochain voyage (`ShipTravel`) au lieu de repartir du centre
+   * à chaque fois. Transitoire : pas de sens à travers un rechargement.
+   */
+  shipAt: string | null;
 
   // --- actions ---
   startGame: (name: string, avatarId: number) => void;
@@ -58,6 +64,7 @@ export interface ProgressState {
   setRealScale: (on: boolean) => void;
   setPref: <K extends keyof Prefs>(key: K, value: Prefs[K]) => void;
   setPerfTierCap: (tier: 'bas' | 'moyen' | 'eleve') => void;
+  setShipAt: (id: string | null) => void;
   reset: () => void;
 }
 
@@ -98,6 +105,7 @@ const initialState = {
   pendingBadges: [] as string[],
   pendingQuestCompletions: [] as string[],
   perfTierCap: null as 'bas' | 'moyen' | 'eleve' | null,
+  shipAt: null as string | null,
 };
 
 export const useProgress = create<ProgressState>()(
@@ -176,6 +184,8 @@ export const useProgress = create<ProgressState>()(
       setPerfTierCap: (tier) =>
         set((s) => (s.perfTierCap === tier ? s : { perfTierCap: tier })),
 
+      setShipAt: (id) => set((s) => (s.shipAt === id ? s : { shipAt: id })),
+
       reset: () => set(initialState),
     }),
     {
@@ -188,6 +198,7 @@ export const useProgress = create<ProgressState>()(
         pendingQuestCompletions: _pq,
         realScaleMode: _rs,
         perfTierCap: _ptc,
+        shipAt: _sa,
         ...rest
       }) => rest,
       migrate: (persisted, from) => {

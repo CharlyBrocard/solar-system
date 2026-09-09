@@ -811,8 +811,15 @@ function ShipTravel({
 }) {
   const { camera } = useThree();
   const holder = useRef<THREE.Group>(null);
-  const trip = useRef<{ curve: THREE.QuadraticBezierCurve3; t: number; dur: number } | null>(null);
+  const trip = useRef<{
+    curve: THREE.QuadraticBezierCurve3;
+    t: number;
+    dur: number;
+    targetId: string;
+  } | null>(null);
   const [linePts, setLinePts] = useState<THREE.Vector3[] | null>(null);
+  const shipAt = useProgress((s) => s.shipAt);
+  const setShipAt = useProgress((s) => s.setShipAt);
 
   const accent = useMemo(() => shipDef(avatarId).accent, [avatarId]);
   // sprite blanc, teinté à la couleur du vaisseau par le matériau
@@ -849,12 +856,28 @@ function ShipTravel({
     // direction vers la caméra (pour sortir l'arc du plan des orbites)
     const toCam = camera.getWorldDirection(new THREE.Vector3()).negate();
 
-    // départ : ~un quart du chemin, nettement soulevé vers la caméra → le
-    // vaisseau apparaît en plein espace, pas noyé dans le halo du Soleil
-    const start = dest
-      .clone()
-      .multiplyScalar(0.28)
-      .addScaledVector(toCam, destLen * 0.4 + 6);
+    // le vaisseau redécolle d'où il s'est posé la dernière fois (astre déjà
+    // visité dans cette scène) plutôt que de toujours repartir du centre.
+    // L'astre central de la scène est toujours à l'origine locale (le Soleil
+    // sur la carte système, la planète sur une sous-carte de lune) — son
+    // `orbitRadius` réel (autour du Soleil) n'a pas de sens ici.
+    const isCenterDock = !!centerBody && shipAt === centerBody.id;
+    const dockedBody =
+      shipAt && shipAt !== target.id
+        ? isCenterDock
+          ? centerBody
+          : pins.find((p) => p.body.id === shipAt)?.body
+        : undefined;
+
+    const start = dockedBody
+      ? (isCenterDock
+          ? new THREE.Vector3()
+          : orbitPosition(dockedBody, driftRef.current, new THREE.Vector3())
+        ).addScaledVector(toCam, worldRadius(dockedBody.size, 0.45, 5.4) * 1.6 + 1.5)
+      : // pas de point de départ connu (premier voyage) : ~un quart du chemin,
+        // nettement soulevé vers la caméra → le vaisseau apparaît en plein
+        // espace, pas noyé dans le halo du Soleil
+        dest.clone().multiplyScalar(0.28).addScaledVector(toCam, destLen * 0.4 + 6);
     // point de contrôle : à mi-chemin, soulevé → arc bombé au-dessus du plan
     const ctrl = start
       .clone()
@@ -866,7 +889,7 @@ function ShipTravel({
       .addScaledVector(dest.clone().sub(start).normalize(), -Math.max(targetR * 2, 2.5));
 
     const curve = new THREE.QuadraticBezierCurve3(start, ctrl, arrive);
-    trip.current = { curve, t: 0, dur: 0.9 };
+    trip.current = { curve, t: 0, dur: 0.9, targetId: target.id };
     setLinePts(curve.getPoints(48));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diveTo]);
@@ -886,6 +909,7 @@ function ShipTravel({
       trip.current = null;
       g.visible = false;
       setLinePts(null);
+      setShipAt(p.targetId);
       onArrived();
     }
   });
