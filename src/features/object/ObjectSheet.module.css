@@ -229,6 +229,13 @@
   color: var(--ink);
 }
 
+/* posé au montage (voir ObjectSheet.tsx) : pas de cadre visible, la personne
+   ne peut pas y retabuler (tabIndex=-1) */
+.name:focus,
+.name:focus-visible {
+  outline: none;
+}
+
 .typeRow {
   display: flex;
   align-items: center;
@@ -286,8 +293,14 @@
 .unknownName {
   font-family: var(--font-mono);
   font-size: 24px;
+  font-weight: 400;
   letter-spacing: 0.22em;
   color: #8e88a8;
+}
+
+.unknownName:focus,
+.unknownName:focus-visible {
+  outline: none;
 }
 
 /* stats */

@@ -27,6 +27,26 @@ const BADGES: Badge[] = [
   { id: 'oeil-de-comete', title: 'Œil de comète', hint: 'Repère deux comètes dans le carnet.' },
   { id: 'cap-sur-les-etoiles', title: 'Cap sur les étoiles', hint: 'Retrouve les sondes Voyager 1 et 2.' },
   { id: 'sentinelle-des-confins', title: 'Sentinelle des confins', hint: 'Pousse jusqu’à Pluton.' },
+  {
+    id: 'conseil-des-naines',
+    title: 'Le conseil des naines',
+    hint: 'Retrouve les cinq planètes naines : Cérès, Pluton, Hauméa, Makémaké et Éris.',
+  },
+  {
+    id: 'oeil-infrarouge',
+    title: 'Œil infrarouge',
+    hint: 'Retrouve le télescope James-Webb dans le carnet.',
+  },
+  {
+    id: 'gardien-des-quatre-anneaux',
+    title: 'Gardien des quatre anneaux',
+    hint: 'Réussis le quiz sur les anneaux des géantes.',
+  },
+  {
+    id: 'archiviste-du-ciel',
+    title: 'Archiviste du ciel',
+    hint: 'Réussis le quiz sur l’histoire des découvertes.',
+  },
 ];
 
 export default BADGES;

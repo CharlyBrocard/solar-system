@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BodyHero } from '@/components/BodyHero';
 import { bodyById, moonsOf, TYPE_LABEL } from '@/data/bodies';
@@ -70,6 +70,14 @@ interface SheetProps {
 }
 
 function DiscoveredSheet({ body, onBack, onGo }: SheetProps) {
+  // Focus posé sur le titre à chaque arrivée (dive, navigation, retour) : les
+  // personnes au clavier / lecteur d'écran « entendent » l'astre sans avoir
+  // à chercher — même logique que `/present`.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, [body.id]);
+
   const moons = moonsOf(body.id);
   const pct = earthDiameterPct(body);
   const isEarth = body.id === 'terre';
@@ -97,7 +105,11 @@ function DiscoveredSheet({ body, onBack, onGo }: SheetProps) {
   );
 
   return (
-    <div className={styles.screen}>
+    <div
+      className={styles.screen}
+      role="region"
+      aria-label={`Fiche — ${body.name}`}
+    >
       <BodyHero
         className={styles.backdropBody}
         body={body}
@@ -131,7 +143,9 @@ function DiscoveredSheet({ body, onBack, onGo }: SheetProps) {
         <div className={styles.identity}>
           <BodyHero body={body} size={104} tint="#2a2050" />
           <div className={styles.identityText}>
-            <h1 className={styles.name}>{body.name}</h1>
+            <h1 className={styles.name} ref={headingRef} tabIndex={-1}>
+              {body.name}
+            </h1>
             <span className={styles.typeRow}>
               <span
                 className={styles.typeDot}
@@ -233,9 +247,18 @@ function LockedSheet({
   onGo,
 }: SheetProps & { discovered: string[] }) {
   const hint = revealHint(discovered, body.zone);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, [body.id]);
 
   return (
-    <div className={styles.screen} data-locked="true">
+    <div
+      className={styles.screen}
+      data-locked="true"
+      role="region"
+      aria-label="Fiche — objet non découvert"
+    >
       <BodyHero
         className={styles.backdropBody}
         body={body}
@@ -268,8 +291,12 @@ function LockedSheet({
         </div>
 
         <div className={styles.unknownWrap}>
-          <div className={styles.unknownDisc}>?</div>
-          <div className={styles.unknownName}>? ? ?</div>
+          <div className={styles.unknownDisc} aria-hidden>
+            ?
+          </div>
+          <h1 className={styles.unknownName} ref={headingRef} tabIndex={-1}>
+            ? ? ?
+          </h1>
           <span className={styles.subtitle}>
             {TYPE_LABEL[body.type]} · Zone scellée
           </span>
@@ -278,7 +305,11 @@ function LockedSheet({
         <div className={styles.section}>
           <span className={styles.sectionLabel}>Ce que l'on sait déjà</span>
           <div className={styles.stats}>
-            <div className={`${styles.stat} ${styles.statWide}`}>
+            <div
+              className={`${styles.stat} ${styles.statWide}`}
+              role="group"
+              aria-label={`Distance au Soleil : ${fmtKm(body.facts.distanceSunKm)}`}
+            >
               <span className={styles.statKey}>Distance au Soleil</span>
               <span className={styles.statVal}>{fmtKm(body.facts.distanceSunKm)}</span>
             </div>
@@ -333,7 +364,11 @@ function Stat({
   note?: string;
 }) {
   return (
-    <div className={styles.stat}>
+    <div
+      className={styles.stat}
+      role="group"
+      aria-label={note ? `${k} : ${v}, ${note}` : `${k} : ${v}`}
+    >
       <span className={styles.statKey}>{k}</span>
       <span className={styles.statVal} data-muted={muted ? 'true' : undefined}>
         {v}

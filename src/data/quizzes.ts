@@ -235,6 +235,92 @@ const QUIZZES: QuizDef[] = [
       },
     ],
   },
+  {
+    id: 'anneaux',
+    title: 'Les anneaux des géantes',
+    passScore: 2,
+    questions: [
+      {
+        prompt: 'Combien des quatre planètes géantes ont des anneaux ?',
+        options: [
+          { label: 'Une seule, Saturne', bodyId: 'saturne' },
+          { label: 'Deux : Saturne et Jupiter' },
+          { label: 'Les quatre' },
+          { label: 'Aucune, ce sont des lunes qu’on confond avec des anneaux' },
+        ],
+        answerIndex: 2,
+        explanation:
+          'Jupiter, Saturne, Uranus et Neptune en ont toutes. Ceux de Saturne sont juste bien plus larges et brillants — les trois autres sont fins et sombres, repérés seulement par occultation d’étoile ou grâce aux sondes.',
+      },
+      {
+        prompt: 'De quoi sont surtout faits les anneaux de Saturne ?',
+        options: [
+          { label: 'De roche' },
+          { label: 'De glace d’eau' },
+          { label: 'De poussière de fer' },
+          { label: 'De méthane gelé' },
+        ],
+        answerIndex: 1,
+        explanation:
+          'Des milliards de blocs de glace d’eau, du grain de sable à la maison, qui réfléchissent bien la lumière du Soleil — d’où leur éclat.',
+      },
+      {
+        prompt: 'Pourquoi les anneaux d’Uranus semblent-ils presque verticaux ?',
+        options: [
+          { label: 'Ils sont faits d’une matière différente des autres anneaux' },
+          { label: 'L’axe de rotation d’Uranus est presque couché, et ses anneaux le suivent' },
+          { label: 'C’est un effet d’optique dû à la distance' },
+          { label: 'Neptune les déforme par gravité' },
+        ],
+        answerIndex: 1,
+        explanation:
+          'Uranus roule sur le côté (axe incliné à 98°) : ses anneaux, alignés sur son équateur, roulent avec elle — vus de la Terre, ils paraissent dressés à la verticale.',
+      },
+    ],
+  },
+  {
+    id: 'histoire',
+    title: 'L’histoire des découvertes',
+    passScore: 2,
+    questions: [
+      {
+        prompt: 'Quelle planète a été trouvée grâce au calcul, avant même d’être observée ?',
+        options: [
+          { label: 'Uranus', bodyId: 'uranus' },
+          { label: 'Neptune', bodyId: 'neptune' },
+          { label: 'Mars', bodyId: 'mars' },
+          { label: 'Pluton', bodyId: 'pluton' },
+        ],
+        answerIndex: 1,
+        explanation:
+          'En 1846, Urbain Le Verrier a calculé la position de Neptune à partir des perturbations qu’elle causait sur l’orbite d’Uranus. L’astronome Johann Galle l’a trouvée dans le ciel en moins d’une soirée, à l’endroit prédit.',
+      },
+      {
+        prompt: 'Quelle a été la première planète découverte grâce à un télescope ?',
+        options: [
+          { label: 'Mars', bodyId: 'mars' },
+          { label: 'Jupiter', bodyId: 'jupiter' },
+          { label: 'Uranus', bodyId: 'uranus' },
+          { label: 'Vénus', bodyId: 'venus' },
+        ],
+        answerIndex: 2,
+        explanation:
+          'Mercure à Saturne étaient connues depuis l’Antiquité, visibles à l’œil nu. William Herschel a repéré Uranus en 1781 en balayant le ciel avec son télescope — la première planète « moderne ».',
+      },
+      {
+        prompt: 'Qui a découvert Pluton en 1930 ?',
+        options: [
+          { label: 'Clyde Tombaugh' },
+          { label: 'Galilée' },
+          { label: 'William Herschel' },
+          { label: 'Urbain Le Verrier' },
+        ],
+        answerIndex: 0,
+        explanation:
+          'Clyde Tombaugh, un astronome américain de 24 ans, l’a repérée à l’observatoire Lowell en comparant deux photographies du ciel prises à quelques jours d’écart : un point y avait bougé.',
+      },
+    ],
+  },
 ];
 
 export default QUIZZES;

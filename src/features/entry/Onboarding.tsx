@@ -30,8 +30,8 @@ export function Onboarding() {
 
   return (
     <div className={styles.screen}>
-      <div className={styles.neb1} />
-      <div className={styles.neb2} />
+      <div className={styles.neb1} aria-hidden />
+      <div className={styles.neb2} aria-hidden />
 
       <form
         className={styles.card}
@@ -61,7 +61,11 @@ export function Onboarding() {
         <div className={styles.ships}>
           <span className={styles.shipsLabel}>Choisis ton vaisseau</span>
           <ShipHero id={avatarId} size={150} className={styles.hangar} tint="#181334" />
-          <div className={styles.shipRow}>
+          <div
+            className={styles.shipRow}
+            role="group"
+            aria-label="Choisis ton vaisseau"
+          >
             {SHIPS.map((ship, i) => (
               <button
                 key={ship.name}

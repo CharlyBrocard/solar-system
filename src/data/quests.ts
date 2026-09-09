@@ -243,6 +243,55 @@ const QUESTS: Quest[] = [
     requires: 'externe',
     goto: '/codex',
   },
+  {
+    id: 'club-des-naines',
+    title: 'Le club des planètes naines',
+    description:
+      'Trop petites pour être des planètes, trop grandes pour être ignorées : Cérès, Pluton, Hauméa, Makémaké et Éris. Retrouve les cinq.',
+    objectives: [
+      {
+        id: 'naines',
+        kind: 'visit-any',
+        targets: ['ceres', 'pluton', 'haumea', 'makemake', 'eris'],
+        count: 5,
+        label: 'Découvrir Cérès, Pluton, Hauméa, Makémaké et Éris',
+      },
+    ],
+    rewardBadgeId: 'conseil-des-naines',
+    requires: 'externe',
+    goto: '/codex',
+  },
+  {
+    id: 'oeil-infrarouge',
+    title: "L'œil infrarouge",
+    description:
+      "À 1,5 million de km de la Terre, un télescope épie la lumière des toutes premières galaxies. Retrouve le télescope James-Webb dans le carnet.",
+    objectives: [
+      { id: 'jwst', kind: 'visit', target: 'jwst', label: 'Découvrir le télescope James-Webb' },
+    ],
+    rewardBadgeId: 'oeil-infrarouge',
+    goto: '/codex',
+  },
+  {
+    id: 'quiz-anneaux',
+    title: 'Le secret des anneaux',
+    description:
+      'Une quête de savoir : trois questions sur les anneaux des planètes géantes.',
+    objectives: [{ id: 'quiz', kind: 'quiz', target: 'anneaux', label: 'Réussir le quiz' }],
+    rewardBadgeId: 'gardien-des-quatre-anneaux',
+    requires: 'geantes',
+    goto: '/quiz/anneaux',
+  },
+  {
+    id: 'quiz-histoire',
+    title: 'Sur les traces des découvreurs',
+    description:
+      "Une quête de savoir : trois questions sur l'histoire des découvertes du système solaire.",
+    objectives: [{ id: 'quiz', kind: 'quiz', target: 'histoire', label: 'Réussir le quiz' }],
+    rewardBadgeId: 'archiviste-du-ciel',
+    requires: 'externe',
+    goto: '/quiz/histoire',
+  },
 ];
 
 export default QUESTS;

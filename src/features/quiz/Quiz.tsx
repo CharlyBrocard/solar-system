@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BodySphere } from '@/components/BodySphere';
 import { bodyById } from '@/data/bodies';
@@ -22,6 +22,19 @@ export function Quiz() {
   useEffect(() => {
     if (!quiz) navigate('/quests', { replace: true });
   }, [quiz, navigate]);
+
+  // Le clic sur « Suivant »/« Terminer » fait disparaître le bouton qui avait
+  // le focus : on le repose sur le titre pertinent (question suivante, ou
+  // écran de résultat) pour ne pas perdre les personnes au clavier / lecteur
+  // d'écran — même logique que `/present`.
+  const promptRef = useRef<HTMLHeadingElement>(null);
+  const resultRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (!finished) promptRef.current?.focus();
+  }, [index, finished]);
+  useEffect(() => {
+    if (finished) resultRef.current?.focus();
+  }, [finished]);
 
   if (!quiz) return null;
 
@@ -51,13 +64,13 @@ export function Quiz() {
   if (finished) {
     return (
       <div className={styles.screen}>
-        <div className={styles.nebula} />
+        <div className={styles.nebula} aria-hidden />
         <div className={styles.card}>
           <div className={styles.result}>
             <span className={styles.resultScore}>
               {quiz.title} · {score} / {quiz.questions.length}
             </span>
-            <h1 className={styles.resultTitle}>
+            <h1 className={styles.resultTitle} ref={resultRef} tabIndex={-1}>
               {passed ? 'Quête de savoir réussie !' : 'Presque…'}
             </h1>
             <p className={styles.resultText}>
@@ -96,14 +109,14 @@ export function Quiz() {
 
   return (
     <div className={styles.screen}>
-      <div className={styles.nebula} />
+      <div className={styles.nebula} aria-hidden />
       <div className={styles.card}>
         <div className={styles.head}>
           <span className={styles.tag}>
-            <span className={styles.tagDot} />
+            <span className={styles.tagDot} aria-hidden />
             Quête de savoir · question {index + 1}/{quiz.questions.length}
           </span>
-          <div className={styles.pips}>
+          <div className={styles.pips} aria-hidden>
             {quiz.questions.map((_, i) => (
               <span
                 key={i}
@@ -122,7 +135,9 @@ export function Quiz() {
           </div>
         </div>
 
-        <h1 className={styles.prompt}>{question.prompt}</h1>
+        <h1 className={styles.prompt} ref={promptRef} tabIndex={-1}>
+          {question.prompt}
+        </h1>
 
         <div className={styles.options}>
           {question.options.map((opt, i) => {
@@ -132,6 +147,8 @@ export function Quiz() {
               else if (i === selected) mark = 'wrong';
             }
             const body = opt.bodyId ? bodyById(opt.bodyId) : undefined;
+            const markSuffix =
+              mark === 'correct' ? ' — bonne réponse' : mark === 'wrong' ? ' — ta réponse' : '';
             return (
               <button
                 key={i}
@@ -139,19 +156,24 @@ export function Quiz() {
                 className={styles.option}
                 data-mark={mark}
                 disabled={answered}
+                aria-label={markSuffix ? `${opt.label}${markSuffix}` : undefined}
                 onClick={() => choose(i)}
               >
                 {body && <BodySphere body={body} size={44} className={styles.optDisc} />}
                 <span className={styles.optLabel}>{opt.label}</span>
-                {mark && <span className={styles.optCheck} />}
+                {mark && <span className={styles.optCheck} aria-hidden />}
               </button>
             );
           })}
         </div>
 
         {answered && (
-          <div className={styles.feedback} data-tone={correct ? undefined : 'ko'}>
-            <span className={styles.feedbackIcon} />
+          <div
+            className={styles.feedback}
+            data-tone={correct ? undefined : 'ko'}
+            role="status"
+          >
+            <span className={styles.feedbackIcon} aria-hidden />
             <span className={styles.feedbackText}>
               {correct ? 'Exact ! ' : 'Raté. '}
               {question.explanation}
