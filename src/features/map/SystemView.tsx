@@ -100,6 +100,7 @@ export function SystemView() {
   const handleSelect = (body: Body) => {
     if (diveTo) return;
     if (!unlocked.has(body.zone)) {
+      sfx.play('locked');
       setSealedZone(body.zone);
       return;
     }
@@ -114,6 +115,7 @@ export function SystemView() {
 
   const handleBelt = () => {
     if (!unlocked.has('ceinture')) {
+      sfx.play('locked');
       setSealedZone('ceinture');
       return;
     }

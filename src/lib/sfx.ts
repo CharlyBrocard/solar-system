@@ -7,7 +7,7 @@
  * Volume modéré (~0.16). Ne joue jamais si désactivé.
  */
 
-export type SfxName = 'discovery' | 'dive' | 'quest' | 'correct' | 'wrong' | 'tap';
+export type SfxName = 'discovery' | 'dive' | 'quest' | 'correct' | 'wrong' | 'tap' | 'locked';
 
 const MASTER_GAIN = 0.16;
 
@@ -97,6 +97,11 @@ class SfxPlayer {
         break;
       case 'tap':
         this.note(ctx, t, 520, 0.05, 'sine', G * 0.4);
+        break;
+      case 'locked':
+        // petit « bump » sourd : zone encore scellée par la brume
+        this.note(ctx, t, 170, 0.1, 'sine', G * 0.55, 120);
+        this.note(ctx, t, 130, 0.14, 'triangle', G * 0.3, 90);
         break;
     }
   }
